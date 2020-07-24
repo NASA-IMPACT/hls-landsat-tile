@@ -39,6 +39,16 @@ RUN cd ${SRC_DIR}/nbar \
     && cd $SRC_DIR \
     && rm -rf nbar
 
+
+# Move and compile angle_tiling
+COPY ./hls_libs/angle_tiling ${SRC_DIR}/angle_tiling
+RUN cd ${SRC_DIR}/angle_tiling \
+    && make \
+    && make clean \
+    && make install \
+    && cd $SRC_DIR \
+    && rm -rf angle_tiling
+
 COPY ./scripts/* ${PREFIX}/bin/
 
 ENTRYPOINT ["/bin/sh", "-c"]
