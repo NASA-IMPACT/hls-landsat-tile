@@ -23,11 +23,23 @@ COPY ./hls_libs/common $SRC_DIR
 # Move and compile tiling
 COPY ./hls_libs/tiling ${SRC_DIR}/tiling
 RUN cd ${SRC_DIR}/tiling \
-    && make BUILD_STATIC=yes ENABLE_THREADING=yes \
+    && make \
     && make clean \
     && make install \
     && cd $SRC_DIR \
     && rm -rf tiling
 
+
+# Move and compile nbar
+COPY ./hls_libs/nbar ${SRC_DIR}/nbar
+RUN cd ${SRC_DIR}/nbar \
+    && make \
+    && make clean \
+    && make install \
+    && cd $SRC_DIR \
+    && rm -rf nbar
+
+COPY ./scripts/* ${PREFIX}/bin/
+
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["landsat_tile.sh"]
+CMD ["landsat-tile.sh"]

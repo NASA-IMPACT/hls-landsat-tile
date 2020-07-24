@@ -10,7 +10,7 @@ OBJ = 	L8inS2tile.o \
 	cubic_conv.o
 
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ)  -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK)
 
 L8inS2tile.o: L8inS2tile.c
 	$(CC) $(CFLAGS) -c L8inS2tile.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
