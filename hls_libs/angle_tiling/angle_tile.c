@@ -1,4 +1,4 @@
-/* Render the solar-view angle of a Landsat scene into an ovelapping 
+/* Grid the solar-view angle of a Landsat scene into an ovelapping 
  * Sentinel-2 tile. Both systems use UTM, but the zone numbers may be different. 
  * 
  * A nearest-neighbor resampling is sufficient. The sub-pixel geolocation error of 
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	char s2tileid[20];		/* The output S2 tile id. */
 	double s2ulx;			
 	double s2uly;	/* The uly of S2 observing the false northing standard for southern hemisphere */ 
-	char fname_in[LINELEN];		/* angle in scene */
+	char fname_sz[LINELEN];		/* solar zenith file in scene */
 	char fname_out[LINELEN];	/* angle in tile */
 
 	char s2numhem[10]; 	/* UTM zone number and the hemisphere spec. e.g. 13S,  13N*/
@@ -42,28 +42,27 @@ int main(int argc, char *argv[])
 	int ret;
 	char *pos;
 
-	char update_outfile;    /* For update or create new */
+	char update_outfile;    /* Indicator whether update or create new */
 	char l1tsceneid[50];
 	char message[MSGLEN];
 
 	if (argc != 6) {
-		fprintf(stderr, "%s s2tileid s2ulx s2uly angScene angTile \n", argv[0]);
+		fprintf(stderr, "Usage: %s s2tileid s2ulx s2uly SZangScene angTile \n", argv[0]);
 		exit(1);
 	}
 
 	strcpy(s2tileid,         argv[1]);
 	s2ulx  =            atof(argv[2]);
 	s2uly  =            atof(argv[3]);
-	strcpy(fname_in,         argv[4]);
+	strcpy(fname_sz,         argv[4]);
 	strcpy(fname_out,        argv[5]);
 	
 	/* Read the scene-based input */
-	ret = read_l8ang_inpathrow(&angin, fname_in);
+	ret = read_l8ang_inpathrow(&angin, fname_sz);
 	if (ret != 0) {
 		Error("Error in open_l8ang()");
 		exit(1);
 	}
-	//fprintf(stderr, "numhem, ulx, uly = %s %.0lf %.0lf\n", angin.numhem, angin.ulx, angin.uly);
 
 	/* Create tile-based output */
 	s2zone = atoi(s2tileid);
@@ -97,16 +96,6 @@ int main(int argc, char *argv[])
 		s2ulyGCTP = s2uly;
 
 	l8zone = atoi(angin.numhem);
-	if (l8zone == s2zone) {
-		double ydiff;
-		
-		ydiff = (s2ulyGCTP-angin.uly);
-		fprintf(stderr, "ulx.diff, uly.diff = %lf, %lf\n", (angout.ulx-angin.ulx)/30, ydiff/30);
-	}
-	else {
-		//fprintf(stderr, "Zone different. %d, %d.  Reproject.\n", l8zone, s2zone);
-		fprintf(stderr, "Zone different. Resample from the input zone \n");
-	}
 
 	if (update_outfile) 
 		angout.tile_has_data = 1;
@@ -142,30 +131,21 @@ int main(int argc, char *argv[])
 				angout.sz[kout] = angin.sz[kin];
 				angout.sa[kout] = angin.sa[kin];
 
-				/* No pan, no cirrus */
-				for (ib = 0; ib < L8NRB-1; ib++) {
-					angout.vz[ib][kout] = angin.vz[ib][kin];
-					angout.va[ib][kout] = angin.va[ib][kin];
-				}
+				angout.vz[kout] = angin.vz[kin];
+				angout.va[kout] = angin.va[kin];
 				
 				angout.tile_has_data = 1;
 			}
 		}
 	}
 
-	/* Set L1T scene ID, 21 chars:   eg  LC81750822016057LGN00  
-	 * Modification on Jun 7, 2017: Collection-base data uses a new file naming format.
- 	 * Although scene ID remains the same as that in the pre-collection data, but it is
-	 * no longer embedded in the filename and has to be found from the MTL file. So we 
-	 * call the basename of the TOA file without the ".tar.gz" the scene ID.
-	 * Since the angle input can be in two format, for simplity we just call the basename
-	 * of the input angle file as scene ID; no need to be rigorous with names for this
-	 * intermediate files. */
-	/* If the output file already exists, append the current scene ID to the previous one */
+	/* Set L1T scene ID as metadata. 
+	 * If the output file already exists, append the current scene ID to the previous one 
+	 */
 
-	pos = strrchr(fname_in, '/');
+	pos = strrchr(fname_sz, '/');
 	if (pos == NULL)
-		pos = fname_in;
+		pos = fname_sz;
 	else 
 		pos++;
 	strcpy(l1tsceneid, pos);
