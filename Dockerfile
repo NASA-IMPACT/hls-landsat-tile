@@ -49,6 +49,7 @@ RUN cd ${SRC_DIR}/angle_tiling \
     && cd $SRC_DIR \
     && rm -rf angle_tiling
 
+COPY ./python_scripts/* ${PREFIX}/bin/
 COPY ./scripts/* ${PREFIX}/bin/
 
 ENTRYPOINT ["/bin/sh", "-c"]
