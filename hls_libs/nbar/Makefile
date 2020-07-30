@@ -11,7 +11,8 @@ OBJ = 	derive_l8nbar.o\
 	cubic_conv.o \
 	cfactor.o \
 	hls_hdfeos.o \
-	s2r.o
+	s2r.o \
+  lsatmeta.o
 
 $(TGT): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
@@ -54,6 +55,9 @@ hls_hdfeos.o: ${SRC_DIR}/hls_hdfeos.c
 
 s2r.o: ${SRC_DIR}/s2r.c
 	$(CC) $(CFLAGS) -c ${SRC_DIR}/s2r.c -I$(GCTPINC) -I$(HDFINC) -I$(SRC_DIR)
+
+lsatmeta.o: ${SRC_DIR}/lsatmeta.c
+	$(CC) $(CFLAGS) -c ${SRC_DIR}/lsatmeta.c -I$(GCTPINC) -I$(HDFINC) -I$(SRC_DIR)
 
 install:
 	install -m 755 $(TGT) /usr/bin
