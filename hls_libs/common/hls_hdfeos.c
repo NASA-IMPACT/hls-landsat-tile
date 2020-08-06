@@ -936,7 +936,7 @@ int set_L30_sds_info(sds_info_t *all_sds,  int nsds,  lsat_t *lsat)
 
 	/* thermal bands */
 	for (iband = 0; iband < L8NTB; iband++) {
-		strcpy(all_sds[nb].name,  L8_THM_SDS_NAME[iband]);
+		strcpy(all_sds[nb].name,  L8_THM_SDS_NAME[1][iband]);
 		strcpy(all_sds[nb].data_type_name, "DFNT_INT16");
 		all_sds[nb].data_type = DFNT_INT16;
 		strcpy(all_sds[nb].dimname[0], dimnames[0]);
