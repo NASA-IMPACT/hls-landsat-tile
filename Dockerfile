@@ -1,5 +1,6 @@
 ARG AWS_ACCOUNT_ID
-FROM ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/hls-base:latest
+# FROM ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/hls-base-c2:latest
+FROM hls-base-c2
 ENV PREFIX=/usr/local \
     SRC_DIR=/usr/local/src \
     GCTPLIB=/usr/local/lib \
@@ -14,8 +15,13 @@ ENV PREFIX=/usr/local \
     HDFLINK=" -lmfhdf -ldf -lm" \
 		L8_AUX_DIR=/usr/local/src \
     ECS_ENABLE_TASK_IAM_ROLE=true \
-    PYTHONPATH="${PREFIX}/lib/python2.7/site-packages" \
-    ACCODE=LaSRCL8V3.5.5
+    PYTHONPATH="${PYTHONPATH}:${PREFIX}/lib/python3.6/site-packages" \
+    ACCODE=LaSRCL8V3.5.5 \
+    LC_ALL=en_US.utf-8 \
+    LANG=en_US.utf-8
+
+# The Python click library requires a set locale
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
 # Move common files to source directory
 COPY ./hls_libs/common $SRC_DIR
@@ -49,8 +55,18 @@ RUN cd ${SRC_DIR}/angle_tiling \
     && cd $SRC_DIR \
     && rm -rf angle_tiling
 
+
+RUN pip3 install rio-cogeo==1.1.10 --no-binary rasterio --user
+RUN pip3 install git+https://github.com/NASA-IMPACT/hls-thumbnails@v1.1
+RUN pip3 install git+https://github.com/NASA-IMPACT/hls-metadata@v1.3
+RUN pip3 install wheel
+RUN pip3 install git+https://github.com/NASA-IMPACT/hls-browse_imagery@v1.1
+RUN pip3 install libxml2-python3
+RUN pip3 install git+https://github.com/NASA-IMPACT/hls-hdf_to_cog@v1.0
+
 COPY ./python_scripts/* ${PREFIX}/bin/
 COPY ./scripts/* ${PREFIX}/bin/
+
 
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["landsat-tile.sh"]
