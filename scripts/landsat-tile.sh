@@ -88,11 +88,7 @@ echo "Generating manifest"
 manifest_name="${outputname}.json"
 manifest="${workingdir}/${manifest_name}"
 create_manifest.py -i "$workingdir" -o "$manifest" -b "$bucket_key" \
-  -c "HLSL30"-p "$outputname" -j "$jobid"
-
-# aws s3 cp "$workingdir" "s3://${DEBUG_BUCKET}/${outputname}" --exclude "*" \
-  # --include "$output_hdf" --include "$outputangle" --include "$outputcfactor" \
-  # --include "$griddedoutput" --recursive
+  -c "HLSL30" -p "$outputname" -j "$jobid"
 
 # Copy output to S3.
 mkdir -p ~/.aws
