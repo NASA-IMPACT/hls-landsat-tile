@@ -918,8 +918,49 @@ int update_arop_metadata(lsat_t *lsat,
 }
 
 
-int write_solarzenith(lsat_t *lsat, double sz)
+/* The NBAR metadata */
+int write_nbar_solarzenith(lsat_t *lsat, double nbarsz)
 {
-	SDsetattr(lsat->sd_id, "Mean_Solar_Zenith", DFNT_FLOAT64, 1, (VOIDP)&sz);
+	int ret; 
+	ret = SDsetattr(lsat->sd_id, L_NBARSZ, DFNT_FLOAT64, 1, (VOIDP)&nbarsz);
+	if (ret != 0) {
+		Error("Error in SDsetattr");
+		exit(-1);
+	}
+
+	return(0);
+}
+
+int write_mean_angle(lsat_t *lsat, double msz, double msa, double mvz, double mva)
+/* Mar 31, 2020 */
+{
+	int ret; 
+	/* L_MSZ */
+	ret = SDsetattr(lsat->sd_id, L_MSZ, DFNT_FLOAT64, 1, (VOIDP)&msz);
+	if (ret != 0) {
+		Error("Error in SDsetattr");
+		exit(-1);
+	}
+
+	/* L_MSA */
+	ret = SDsetattr(lsat->sd_id, L_MSA, DFNT_FLOAT64, 1, (VOIDP)&msa);
+	if (ret != 0) {
+		Error("Error in SDsetattr");
+		exit(-1);
+	}
+
+	/* L_MVZ */
+	ret = SDsetattr(lsat->sd_id, L_MVZ, DFNT_FLOAT64, 1, (VOIDP)&mvz);
+	if (ret != 0) {
+		Error("Error in SDsetattr");
+		exit(-1);
+	}
+	/* L_MVA */
+	ret = SDsetattr(lsat->sd_id, L_MVA, DFNT_FLOAT64, 1, (VOIDP)&mva);
+	if (ret != 0) {
+		Error("Error in SDsetattr");
+		exit(-1);
+	}
+
 	return(0);
 }

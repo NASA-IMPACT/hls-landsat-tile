@@ -26,6 +26,7 @@
 #define L_NROWS  "NROWS"
 #define L_NCOLS  "NCOLS"
 #define L_SPATIAL_RESOLUTION "SPATIAL_RESOLUTION"
+#define L_NBARSZ  "NBAR_SOLAR_ZENITH"
 #define L_MSZ  "MEAN_SUN_ZENITH_ANGLE"
 #define L_MSA  "MEAN_SUN_AZIMUTH_ANGLE"
 #define L_MVZ  "MEAN_VIEW_ZENITH_ANGLE"
@@ -114,4 +115,24 @@ int update_arop_metadata(lsat_t *lsat,
 			double rmse, 
 			double shiftx, 
 			double shifty);
+
+
+
+/* The NBAR metadata */
+int write_nbar_solarzenith(lsat_t *lsat, double nbarsz);
+
+
+int write_mean_angle(lsat_t *lsat, double msz, double msa, double mvz, double mva);
+/* The mean solar and view angle recalculated for the tiled data. 
+ * Originally the mean angles of the USGS Level-1 data for the scene center are carried 
+ * through and saved for the tiles, but those values did not make much sense for the tiled
+ * data.  Recalculate now.
+ * Used in the NBAR code which reads the angle file, although it is not related to NBAR.
+ *
+ * This will overwrites the scenen-level attributes.
+ *
+ * Mar 31, 2020. This is to retrofit the code; not pretty.
+ */
+
+
 #endif
