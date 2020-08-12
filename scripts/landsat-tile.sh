@@ -35,15 +35,14 @@ set_output_names () {
   hlsversion="v1.5"
   outputbasename="${mgrs}.${year}${day_of_year}${hms}.${hlsversion}"
   nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
-  echo "$outputbasename"
-  echo "$nbarbasename"
   outputname="HLS.L30.${outputbasename}"
+  # The derive_l8nbar C code infers values from the input file name so this
+  # formatting is necessary.  This implicit name requirement is not documented
+  # anywhere!
   nbar_name="HLS.L30.${nbarbasename}"
   nbar_input="${workingdir}/${nbar_name}.hdf"
   output_hdf="${workingdir}/${outputname}.hdf"
-  # outputangle="${workingdir}/L8ANGLE.${outputbasename}.hdf"
   nbar_angle="${workingdir}/L8ANGLE.${nbarbasename}.hdf"
-  # outputcfactor="${workingdir}/CFACTOR.${outputbasename}.hdf"
   nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
   griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
   output_metadata="${workingdir}/${outputname}.cmr.xml"
