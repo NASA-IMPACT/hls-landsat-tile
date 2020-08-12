@@ -32,11 +32,19 @@ day_of_year=$(get_doy.py -y "${year}" -m "${month}" -d "${day}")
 
 set_output_names () {
   hms="$1"
-  outputbasename="${mgrs}.${year}${day_of_year}${hms}.v1.5"
+  hlsversion="v1.5"
+  outputbasename="${mgrs}.${year}${day_of_year}${hms}.${hlsversion}"
+  nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
+  echo "$outputbasename"
+  echo "$nbarbasename"
   outputname="HLS.L30.${outputbasename}"
+  nbar_name="HLS.L30.${nbarbasename}"
+  nbar_input="${workingdir}/${nbar_name}.hdf"
   output_hdf="${workingdir}/${outputname}.hdf"
-  outputangle="${workingdir}/L8ANGLE.${outputbasename}.hdf"
-  outputcfactor="${workingdir}/CFACTOR.${outputbasename}.hdf"
+  # outputangle="${workingdir}/L8ANGLE.${outputbasename}.hdf"
+  nbar_angle="${workingdir}/L8ANGLE.${nbarbasename}.hdf"
+  # outputcfactor="${workingdir}/CFACTOR.${outputbasename}.hdf"
+  nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
   griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
   output_metadata="${workingdir}/${outputname}.cmr.xml"
   output_thumbnail="${workingdir}/${outputname}.jpg"
@@ -51,18 +59,19 @@ read -r -a pathrows <<< "$pathrowlist"
 
 # Download files
 echo "Download date pathrow intermediate ac files"
+INDEX=0
 for pathrow in "${pathrows[@]}"; do
   basename="${date}_${pathrow}"
   landsat_ac="${basename}.hdf"
   landsat_sz_angle="${basename}_SZA.img"
   aws s3 cp "s3://${inputbucket}" "$workingdir" \
     --exclude "*" --include "${basename}*" --recursive
-  count="${pathrows[$pathrow]}"
   # Use the scene_time of the first image for output naming
-  if ["$count" = 0 ]; then
+  if [ "$INDEX" = 0 ]; then
     scene_time=$(extract_landsat_hms.py "$landsat_ac")
     set_output_names "$scene_time"
   fi
+  let INDEX=${INDEX}+1
   echo "Running L8inS2tile ${pathrow}"
   L8inS2tile  "$mgrs" \
               "$mgrs_ulx" \
@@ -70,18 +79,24 @@ for pathrow in "${pathrows[@]}"; do
               "NONE" \
               "NONE" \
               "$landsat_ac" \
-              "$output_hdf"
+              "$nbar_input"
 
   echo "Running angle_tile ${pathrow}"
   angle_tile  "$mgrs" \
               "$mgrs_ulx" \
               "$mgrs_uly" \
               "$landsat_sz_angle" \
-              "$outputangle"
+              "$nbar_angle"
 done
+
 echo "Running NBAR"
-cp "$output_hdf" "$griddedoutput"
-derive_l8nbar "$output_hdf" "$outputangle" "$outputcfactor"
+cp "$nbar_input" "$griddedoutput"
+derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
+
+# Rename nbar to correct output name
+echo "Rename NBAR"
+mv "$nbar_input" "$output_hdf"
+mv "${nbar_input}.hdr" "${output_hdf}.hdr"
 
 # Convert to COGs
 echo "Converting to COGs"
@@ -97,8 +112,8 @@ create_metadata "$output_hdf" --save "$output_metadata"
 
 # Generate manifest
 echo "Generating manifest"
-create_manifest.py -i "$workingdir" -o "$manifest" -b "$bucket_key" \
-  -c "HLSL30" -p "$outputname" -j "$jobid"
+create_manifest "$workingdir" "$manifest" "$bucket_key" "HLSL30" \
+  "$outputname" "$jobid"
 
 # Copy output to S3.
 mkdir -p ~/.aws
