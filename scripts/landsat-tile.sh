@@ -28,29 +28,49 @@ year=${date:0:4}
 month=${date:5:2}
 day=${date:8:2}
 day_of_year=$(get_doy.py -y "${year}" -m "${month}" -d "${day}")
-outputbasename="${mgrs}.${year}${day_of_year}.${landsat_path}.v1.5"
-outputname="HLS.L30.${outputbasename}"
-output_hdf="${workingdir}/${outputname}.hdf"
-outputangle="${workingdir}/L8ANGLE.${outputbasename}.hdf"
-outputcfactor="${workingdir}/CFACTOR.${outputbasename}.hdf"
-griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
-output_metadata="${workingdir}/${outputname}.cmr.xml"
-output_thumbnail="${workingdir}/${outputname}.jpg"
-bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${outputname}"
 
+
+set_output_names () {
+  hms="$1"
+  hlsversion="v1.5"
+  outputbasename="${mgrs}.${year}${day_of_year}${hms}.${hlsversion}"
+  nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
+  outputname="HLS.L30.${outputbasename}"
+  # The derive_l8nbar C code infers values from the input file name so this
+  # formatting is necessary.  This implicit name requirement is not documented
+  # anywhere!
+  nbar_name="HLS.L30.${nbarbasename}"
+  nbar_input="${workingdir}/${nbar_name}.hdf"
+  output_hdf="${workingdir}/${outputname}.hdf"
+  nbar_angle="${workingdir}/L8ANGLE.${nbarbasename}.hdf"
+  nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
+  griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
+  output_metadata="${workingdir}/${outputname}.cmr.xml"
+  output_thumbnail="${workingdir}/${outputname}.jpg"
+  manifest_name="${outputname}.json"
+  manifest="${workingdir}/${manifest_name}"
+  bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${outputname}"
+}
 
 # Create array from pathrowlist
 IFS=','
 read -r -a pathrows <<< "$pathrowlist"
 
 # Download files
-echo "Download date pathrow files"
+echo "Download date pathrow intermediate ac files"
+INDEX=0
 for pathrow in "${pathrows[@]}"; do
   basename="${date}_${pathrow}"
   landsat_ac="${basename}.hdf"
   landsat_sz_angle="${basename}_SZA.img"
   aws s3 cp "s3://${inputbucket}" "$workingdir" \
     --exclude "*" --include "${basename}*" --recursive
+  # Use the scene_time of the first image for output naming
+  if [ "$INDEX" = 0 ]; then
+    scene_time=$(extract_landsat_hms.py "$landsat_ac")
+    set_output_names "$scene_time"
+  fi
+  let INDEX=${INDEX}+1
   echo "Running L8inS2tile ${pathrow}"
   L8inS2tile  "$mgrs" \
               "$mgrs_ulx" \
@@ -58,18 +78,24 @@ for pathrow in "${pathrows[@]}"; do
               "NONE" \
               "NONE" \
               "$landsat_ac" \
-              "$output_hdf"
+              "$nbar_input"
 
   echo "Running angle_tile ${pathrow}"
   angle_tile  "$mgrs" \
               "$mgrs_ulx" \
               "$mgrs_uly" \
               "$landsat_sz_angle" \
-              "$outputangle"
+              "$nbar_angle"
 done
+
 echo "Running NBAR"
-cp "$output_hdf" "$griddedoutput"
-derive_l8nbar "$output_hdf" "$outputangle" "$outputcfactor"
+cp "$nbar_input" "$griddedoutput"
+derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
+
+# Rename nbar to correct output name
+echo "Rename NBAR"
+mv "$nbar_input" "$output_hdf"
+mv "${nbar_input}.hdr" "${output_hdf}.hdr"
 
 # Convert to COGs
 echo "Converting to COGs"
@@ -85,10 +111,8 @@ create_metadata "$output_hdf" --save "$output_metadata"
 
 # Generate manifest
 echo "Generating manifest"
-manifest_name="${outputname}.json"
-manifest="${workingdir}/${manifest_name}"
-create_manifest.py -i "$workingdir" -o "$manifest" -b "$bucket_key" \
-  -c "HLSL30" -p "$outputname" -j "$jobid"
+create_manifest "$workingdir" "$manifest" "$bucket_key" "HLSL30" \
+  "$outputname" "$jobid"
 
 # Copy output to S3.
 mkdir -p ~/.aws
