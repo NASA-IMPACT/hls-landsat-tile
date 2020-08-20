@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 	else
 		lsatout.tile_has_data = 1;
 
-	disjoint = 1;    /* Assuming no overlap */ 
+	disjoint = 1;    /* Assuming no overlap between the scene and tile*/ 
 	double xinzone, yinzone; /* x, y in the input zone, which is different from S2 zone */ 
 
 	/* AROP derives the polynomial (1) based on aggregated, 30m Sentinel pixel, (2) for
@@ -236,6 +236,9 @@ int main(int argc, char *argv[])
 			 * which are identical for the two adjacent rows.
 			 */
 			if (ispixvalid(&lsatout, irow, icol))
+			 	/* Aug 20, 2020: But there is chance that variable disjoint won't be
+				 * reset to 0, if "continue" here. But anyway, "disjoint" value is 
+				 * only used by my script and not needed for global production. */
 				continue;
 
 			s2x = s2ulx + (icol+0.5) * HLS_PIXSZ;
@@ -292,7 +295,7 @@ int main(int argc, char *argv[])
 
 	close_lsat(&lsatout);
 
-	return(disjoint);
+	return(0);
 }
 
 /* At this pixel, not all bands have fill value */
