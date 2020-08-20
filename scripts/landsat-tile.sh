@@ -33,7 +33,7 @@ day_of_year=$(get_doy.py -y "${year}" -m "${month}" -d "${day}")
 set_output_names () {
   hms="$1"
   hlsversion="v1.5"
-  outputbasename="${mgrs}.${year}${day_of_year}${hms}.${hlsversion}"
+  outputbasename="T${mgrs}.${year}${day_of_year}T${hms}.${hlsversion}"
   nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
   outputname="HLS.L30.${outputbasename}"
   # The derive_l8nbar C code infers values from the input file name so this
