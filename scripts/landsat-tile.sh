@@ -112,7 +112,7 @@ create_metadata "$output_hdf" --save "$output_metadata"
 # Generate manifest
 echo "Generating manifest"
 create_manifest "$workingdir" "$manifest" "$bucket_key" "HLSL30" \
-  "$outputname" "$jobid" false 
+  "$outputname" "$jobid" false
 
 # Copy output to S3.
 mkdir -p ~/.aws
