@@ -1,4 +1,3 @@
-# FROM ${aws_account_id}.dkr.ecr.us-west-2.amazonaws.com/hls-base-c2:latest
 # FROM hls-base-c2
 FROM 018923174646.dkr.ecr.us-west-2.amazonaws.com/espa/external-c2
 ENV PREFIX=/usr/local \
