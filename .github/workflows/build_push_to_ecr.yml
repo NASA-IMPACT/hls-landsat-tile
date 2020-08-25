@@ -32,6 +32,6 @@ jobs:
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-east-2
+          region: us-west-2
           local-image: hls-landsat-tile
           image: hls-landsat-tile:dev-${{ github.sha }}
