@@ -3,9 +3,6 @@ name: build_push_to_ecr
 on:
   push:
     branches: [ dev ]
-  release:
-    branches: [ master ]
-    types: [ published ]
 
 jobs:
   build_push_to_ecr:
