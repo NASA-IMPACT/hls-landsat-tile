@@ -41,7 +41,7 @@ jobs:
 
       - name: Push to prod ECR
         if: contains('refs/heads/master', github.ref)
-        id: push-latest-ecr
+        id: push-prod-ecr
         uses: jwalton/gh-ecr-push@v1
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
