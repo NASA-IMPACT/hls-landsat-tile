@@ -13,7 +13,7 @@ jobs:
 
     steps:
         name: Extract Branch Name
-        run: echo github.ref
+        run: echo ${GITHUB_REF}
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
