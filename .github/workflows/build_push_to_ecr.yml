@@ -43,7 +43,7 @@ jobs:
           image: hls-landsat-tile
 
       - name: Push to prod ECR
-        if: contains(github.ref, "release")
+        if: contains(github.ref, 'release')
         id: push-prod-ecr
         uses: jwalton/gh-ecr-push@v1
         with:
