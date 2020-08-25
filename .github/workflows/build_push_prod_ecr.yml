@@ -1,11 +1,12 @@
-name: build_push_to_ecr
+name: build_push_to_prod_ecr
 
 on:
-  push:
-    branches: [ dev ]
+  release:
+    branches: [ master ]
+    types: [ published ]
 
 jobs:
-  build_push_to_ecr:
+  build_push_to_prod_ecr:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,13 +27,12 @@ jobs:
       - name: Build image
         run: docker build . --tag hls-landsat-tile
 
-      - name: Push to latest ECR
-        if: github.ref == 'refs/heads/dev'
-        id: push-latest-ecr
+      - name: Push to prod ECR
+        id: push-prod-ecr
         uses: jwalton/gh-ecr-push@v1
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: us-west-2
           local-image: hls-landsat-tile
-          image: hls-landsat-tile
+          image: hls-landsat-tile:${GITHUB_REF##*/}
