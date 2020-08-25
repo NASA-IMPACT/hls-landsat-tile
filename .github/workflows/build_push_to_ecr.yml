@@ -5,6 +5,7 @@ on:
     branches: [ dev ]
   release:
     branches: [ master ]
+    type: [ published ]
 
 jobs:
   build_push_to_ecr:
@@ -40,7 +41,7 @@ jobs:
           image: hls-landsat-tile
 
       - name: Push to prod ECR
-        if: contains('refs/heads/master', github.ref)
+        if: github.event.action == 'published'
         id: push-prod-ecr
         uses: jwalton/gh-ecr-push@v1
         with:
