@@ -1,6 +1,5 @@
-ARG AWS_ACCOUNT_ID
-# FROM ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/hls-base-c2:latest
-FROM hls-base-c2
+# FROM hls-base-c2
+FROM 018923174646.dkr.ecr.us-west-2.amazonaws.com/espa/external-c2
 ENV PREFIX=/usr/local \
     SRC_DIR=/usr/local/src \
     GCTPLIB=/usr/local/lib \
@@ -19,6 +18,10 @@ ENV PREFIX=/usr/local \
     ACCODE=LaSRCL8V3.5.5 \
     LC_ALL=en_US.utf-8 \
     LANG=en_US.utf-8
+
+# Python base dependencies
+RUN pip3 install scipy awscli gdal~=2.4
+RUN ln -fs /usr/bin/python3 /usr/bin/python
 
 # The Python click library requires a set locale
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
