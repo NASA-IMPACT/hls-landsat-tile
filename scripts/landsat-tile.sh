@@ -17,6 +17,7 @@ workingdir="/var/scratch/${jobid}"
 debug_bucket="$DEBUG_BUCKET"
 replace_existing="$REPLACE_EXISTING"
 
+exit 1
 # Remove tmp files on exit
 trap "rm -rf $workingdir; exit" INT TERM EXIT
 
