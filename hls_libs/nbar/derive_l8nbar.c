@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
 			if (lsatin.ref[0][k] == HLS_REFL_FILLVAL)	/* Checking on any band is fine */
 				continue;
 
-			if (l8ang.sz[k] == LANDSAT_ANGFILL || l8ang.sa[k] == LANDSAT_ANGFILL ||
-			    l8ang.vz[k] == LANDSAT_ANGFILL || l8ang.va[k] == LANDSAT_ANGFILL)
+			if (l8ang.sz[k] == ANGFILL || l8ang.sa[k] == ANGFILL ||
+			    l8ang.vz[k] == ANGFILL || l8ang.va[k] == ANGFILL)
 				continue;
 
 			sz = l8ang.sz[k]/100.0;
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
 				/* July 6, 2020. By any chance that the angle data is missing. Shouldn't happen
 				 * now; just check.
 				 */
-				if (l8ang.sz[k] == LANDSAT_ANGFILL) {
+				if (l8ang.sz[k] == ANGFILL) {
 					lsatin.ref[ib][k] = HLS_REFL_FILLVAL;
 					
 					/* The same pixel location is reset repeatedly and wastefully, but it's ok */

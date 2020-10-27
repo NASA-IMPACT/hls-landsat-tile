@@ -24,11 +24,14 @@ static int16 thm_fillval = -9999;
 #define HLS_MASK_FILLVAL   (255) 	/* One-byte QA. Added Apr 6, 2017 */
 #define AC_S2_CLOUD_FILLVAL (24)	/* Used only in intermediate steps leading to S10 */
 
-#define ANGFILL 40000	/* Angle. This is for Sentinel-2. Angles are unsigned int16. */
+#define ANGFILL 40000	/* Angle. This is for Sentinel-2. Angles are uint16. */
 
 // #define LANDSAT_ANGFILL -30000	
 // July 28, 2020: Fill value used by ESPA code:
-#define LANDSAT_ANGFILL -32768
+// #define LANDSAT_ANGFILL -32768
+// 23 Oct, 2020. Finally, consistent with Sentinel-2. So not needed at all. 
+// #define LANDSAT_ANGFILL ANGFILL
+#define USGS_ANGFILL	0	/* USGS uses 0, to be changed to ANGFILL in HLS */
 
 
 
