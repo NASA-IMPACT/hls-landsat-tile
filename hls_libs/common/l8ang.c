@@ -3,34 +3,41 @@
 /* Read scene-based L8 sun/view zenith/azimuth angle into a structure described in l8ang_t.
  * This is needed for the gridding of the scene-based angle into MGRS tiles.
  *
- * There are four types of angles in four files: solar zenith, solar azimuth,
- * band 4 (red) view zenith and azimuth. The red band angle is representative 
- * of all spectral bands. 
+ * There are four types of angles in four input files: solar zenith, solar azimuth,
+ * band 4 (red) view zenith and azimuth. USGS chooes the angles of the red band to represent
+ * all spectral bands. 
  *
- * The angle is produced by USGS in COG format, and HLS converts it to plain binary 
- * for easier read, for example:
+ * The angle is produced by USGS in COG format, and HLS converts it to ENVI binary 
+ * for this code to read, for example:
  * convert 
  *   LC08_L1TP_140041_20130503_20200330_02_T1_SZA.TIF
  * to
  *   LC08_L1TP_140041_20130503_20200330_02_T1_SZA.img
- * The parameter filename of this function is the one for SZA , from which filenames 
- * for SZA, VZA, VAA can be inferred.
+ * The parameter filename of this function is the filename of SZA, from which filenames 
+ * for SZA, VZA, VAA can be inferred. The ENVI header filename is inferred from the SZA
+ * filename too and opened for geolocation.
  *
  * A related function is open_l8ang(l8ang_t  *l8ang, intn access_mode) which
  * reads or writes the angle in the tiled format described in l8ang.h.
  * 
- * USGS code saves azimuth that is greater 180 as (azimuth-360). 
+ * Changes made to USGS angles:
+ * 1. USGS code saves azimuth that is greater 180 as (azimuth-360). This code adds 360 to
+ *    negative azimuth. 
+ * 2. USGS uses 0 as the fill value, which is not a good choice. Change it to 40,000 (after
+ *    scaling).
  */
 int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz) 
 {
 	char fname[500];     /* angle filename for SA,VZ,VA is derived from fname_sz */	
+	
 	char message[MSGLEN];
 	FILE *fang;
 	char *base, *cp;
 	char header[500];
 	char line[500];
 	FILE *fhdr;
-	int nrow, ncol;
+	int nrow, ncol, i;
+	int16 tmp;
 
 
 	/* Read the header file of the solar zneith angle image */
@@ -65,7 +72,8 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 			cp = strchr(line, ','); 
 			cp = strchr(cp+1, ','); 
 			cp = strchr(cp+1, ','); 
-		        l8ang->ulx = atof(cp+1); /* Read after 3rd comma */
+			/* Read after 3rd comma. Gdal-translate has adjusted the UL coordinates by half a pixel. */
+		        l8ang->ulx = atof(cp+1); 
 			cp = strchr(cp+1, ','); 
 		        l8ang->uly = atof(cp+1); /* Read after 4th comma */
 			cp = strchr(cp+1, ','); 
@@ -85,31 +93,32 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 	ncol = l8ang->ncol;
 
 	/* Memory for all SDS in l8ang */
-	if ((l8ang->sz = (int16*)calloc(nrow * ncol, sizeof(int16))) == NULL) {
+	if ((l8ang->sz = (uint16*)calloc(nrow * ncol, sizeof(uint16))) == NULL) {
 		Error("Cannot allocate memory");
 		return(1);
 	}
-	if ((l8ang->sa = (int16*)calloc(nrow * ncol, sizeof(int16))) == NULL) {
+	if ((l8ang->sa = (uint16*)calloc(nrow * ncol, sizeof(uint16))) == NULL) {
 		Error("Cannot allocate memory");
 		return(1);
 	}
-	if ((l8ang->vz = (int16*)calloc(nrow * ncol, sizeof(int16))) == NULL) {
+	if ((l8ang->vz = (uint16*)calloc(nrow * ncol, sizeof(uint16))) == NULL) {
 		Error("Cannot allocate memory");
 		return(1);
 	}
-	if ((l8ang->va = (int16*)calloc(nrow * ncol, sizeof(int16))) == NULL) {
+	if ((l8ang->va = (uint16*)calloc(nrow * ncol, sizeof(uint16))) == NULL) {
 		Error("Cannot allocate memory");
 		return(1);
 	}
 	
-	/* Solar zenith */
+	/* Solar zenith.  */
 	strcpy(fname, fname_sz);
 	if ((fang = fopen(fname, "r")) == NULL) {
 		sprintf(message, "Cannot open %s", fname);
 		Error(message);
 		return(1);
 	}
-	if (fread(l8ang->sz, sizeof(int16), nrow * ncol, fang) != nrow * ncol) {
+	/* It is correct to read int16 zenith as uint16 */
+	if (fread(l8ang->sz, sizeof(uint16), nrow * ncol, fang) != nrow * ncol) {
 		sprintf(message, "Input file is too short: %s", fname);
 		Error(message);
 		return(1);
@@ -140,10 +149,17 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 		Error(message);
 		return(1);
 	}
-	if (fread(l8ang->sa, sizeof(int16), nrow * ncol, fang) != nrow * ncol) {
-		sprintf(message, "Input file is too short: %s", fname);
-		Error(message);
-		return(1);
+	for (i = 0; i < nrow * ncol; i++) {
+		if (fread(&tmp, sizeof(int16), 1, fang) != 1) {
+			sprintf(message, "Input file is too short: %s", fname);
+			Error(message);
+			return(1);
+		}
+		if (tmp < 0)
+			l8ang->sa[i] = tmp + 36000;
+		else
+			l8ang->sa[i] = tmp;
+			
 	}
 	if (fseek(fang, 1, SEEK_CUR) != 0) {
 		sprintf(message, "Input file is too long: %s", fname);
@@ -159,6 +175,7 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 		Error(message);
 		return(1);
 	}
+	/* It is correct to read int16 zenith as uint16 */
 	if (fread(l8ang->vz, sizeof(int16), nrow * ncol, fang) != nrow * ncol) {
 		sprintf(message, "Input file is too short: %s", fname);
 		Error(message);
@@ -178,10 +195,17 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 		Error(message);
 		return(1);
 	}
-	if (fread(l8ang->va, sizeof(int16), nrow * ncol, fang) != nrow * ncol) {
-		sprintf(message, "Input file size wrong: %s", fname);
-		Error(message);
-		return(1);
+	for (i = 0; i < nrow * ncol; i++) {
+		if (fread(&tmp, sizeof(int16), 1, fang) != 1) {
+			sprintf(message, "Input file is too short: %s", fname);
+			Error(message);
+			return(1);
+		}
+		if (tmp < 0)
+			l8ang->va[i] = tmp + 36000;
+		else
+			l8ang->va[i] = tmp;
+			
 	}
 	if (fseek(fang, 1, SEEK_CUR) != 0) {
 		sprintf(message, "Input file is too long: %s", fname);
@@ -189,6 +213,21 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 		return(1);
 	}
 	fclose(fang);
+
+	/* Oct 23, 2020. USGS uses 0 as fill value; change the fill value to ANGFILL (40000) */
+	for (i = 0; i < nrow * ncol; i++) {
+		/* When all four angles for a pixel are 0, the pixel is outside the swath. Azimuth
+		 * can be 0 even within the swath. */
+		if ( l8ang->sz[i] == USGS_ANGFILL && 
+		     l8ang->sa[i] == USGS_ANGFILL && 
+		     l8ang->vz[i] == USGS_ANGFILL && 
+		     l8ang->va[i] == USGS_ANGFILL) {
+			l8ang->sz[i] = ANGFILL;
+			l8ang->sa[i] = ANGFILL;
+			l8ang->vz[i] = ANGFILL;
+			l8ang->va[i] = ANGFILL;
+		}
+	}
 
 	return(0);
 }
@@ -242,7 +281,7 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		start[0] = 0; edge[0] = l8ang->nrow;
 		start[1] = 0; edge[1] = l8ang->ncol;
 
-		if ((l8ang->sz = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->sz = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
@@ -262,7 +301,7 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		}
 		l8ang->sds_id_sa = SDselect(l8ang->sd_id, sds_index);
 
-		if ((l8ang->sa = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->sa = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
@@ -283,7 +322,7 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		}
 		l8ang->sds_id_vz = SDselect(l8ang->sd_id, sds_index);
 
-		if ((l8ang->vz = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->vz = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
@@ -303,7 +342,7 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		}
 		l8ang->sds_id_va = SDselect(l8ang->sd_id, sds_index);
 
-		if ((l8ang->va = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->va = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
@@ -357,7 +396,7 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 
 		/* Solar zenith */
 		strcpy(sds_name, L8_SZ);
-		if ((l8ang->sds_id_sz = SDcreate(l8ang->sd_id, sds_name, DFNT_INT16, rank, dimsizes)) == FAIL) { 
+		if ((l8ang->sds_id_sz = SDcreate(l8ang->sd_id, sds_name, DFNT_UINT16, rank, dimsizes)) == FAIL) { 
 			sprintf(message, "Cannot create SDS %s", sds_name);
 			Error(message);
 			return(ERR_CREATE);
@@ -365,16 +404,16 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sz, comp_type, &c_info);	
-		if ((l8ang->sz = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->sz = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
 		for (k = 0; k < npix; k++) 
-			l8ang->sz[k] = LANDSAT_ANGFILL;
+			l8ang->sz[k] = ANGFILL;
 			
 		/* Solar azimuth */
 		strcpy(sds_name, L8_SA);
-		if ((l8ang->sds_id_sa = SDcreate(l8ang->sd_id, sds_name, DFNT_INT16, rank, dimsizes)) == FAIL) { 
+		if ((l8ang->sds_id_sa = SDcreate(l8ang->sd_id, sds_name, DFNT_UINT16, rank, dimsizes)) == FAIL) { 
 			sprintf(message, "Cannot create SDS %s", sds_name);
 			Error(message);
 			return(ERR_CREATE);
@@ -382,16 +421,16 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sa, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sa, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sa, comp_type, &c_info);	
-		if ((l8ang->sa = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->sa = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
 		for (k = 0; k < npix; k++) 
-			l8ang->sa[k] = LANDSAT_ANGFILL;
+			l8ang->sa[k] = ANGFILL;
 
 		/* View zenith and azimuth*/
 		strcpy(sds_name, L8_VZ);
-		if ((l8ang->sds_id_vz = SDcreate(l8ang->sd_id, sds_name, DFNT_INT16, rank, dimsizes)) == FAIL) { 
+		if ((l8ang->sds_id_vz = SDcreate(l8ang->sd_id, sds_name, DFNT_UINT16, rank, dimsizes)) == FAIL) { 
 			sprintf(message, "Cannot create SDS %s", sds_name);
 			Error(message);
 			return(ERR_CREATE);
@@ -402,16 +441,16 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		/* SDS attribute not complete. OK */
 
 		/* memory */
-		if ((l8ang->vz = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->vz = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
 		for (k = 0; k < npix; k++) 
-			l8ang->vz[k] = LANDSAT_ANGFILL;
+			l8ang->vz[k] = ANGFILL;	// Finally changed to 40,000
 
 
 		strcpy(sds_name, L8_VA);
-		if ((l8ang->sds_id_va = SDcreate(l8ang->sd_id, sds_name, DFNT_INT16, rank, dimsizes)) == FAIL) { 
+		if ((l8ang->sds_id_va = SDcreate(l8ang->sd_id, sds_name, DFNT_UINT16, rank, dimsizes)) == FAIL) { 
 			sprintf(message, "Cannot create SDS %s", sds_name);
 			Error(message);
 			return(ERR_CREATE);
@@ -422,12 +461,12 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		/* SDS attribute not complete. OK */
 
 		/* memory */
-		if ((l8ang->va = (int16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(int16))) == NULL) {
+		if ((l8ang->va = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
 		}
 		for (k = 0; k < npix; k++) 
-			l8ang->va[k] = LANDSAT_ANGFILL;
+			l8ang->va[k] = ANGFILL;
 
 
 		l8ang->l1tsceneid[0] = '\0'; 	/* Empty string*/
