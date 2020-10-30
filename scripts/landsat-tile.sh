@@ -1,23 +1,26 @@
-#/bin/bash
+#!/bin/bash
 
 # Exit on any error
 set -o errexit
 
 jobid="$AWS_BATCH_JOB_ID"
 pathrowlist="$PATHROW_LIST"
+# shellcheck disable=SC2153
 date="$DATE"
+# shellcheck disable=SC2153
 mgrs="$MGRS"
-landsat_path="$LANDSAT_PATH"
+# shellcheck disable=SC2153
 mgrs_ulx="$MGRS_ULX"
+# shellcheck disable=SC2153
 mgrs_uly="$MGRS_ULY"
 bucket="$OUTPUT_BUCKET"
-bucket_role_arn="$GCC_ROLE_ARN"
 inputbucket="$INPUT_BUCKET"
 workingdir="/var/scratch/${jobid}"
+# shellcheck disable=SC2153
 debug_bucket="$DEBUG_BUCKET"
-replace_existing="$REPLACE_EXISTING"
 
 # Remove tmp files on exit
+# shellcheck disable=SC2064
 trap "rm -rf $workingdir; exit" INT TERM EXIT
 
 # Create workingdir
@@ -27,7 +30,7 @@ cd "$workingdir"
 year=${date:0:4}
 month=${date:5:2}
 day=${date:8:2}
-day_of_year=$(get_doy.py -y "${year}" -m "${month}" -d "${day}")
+day_of_year=$(get_doy "${year}" "${month}" "${day}")
 
 
 set_output_names () {
@@ -70,6 +73,7 @@ for pathrow in "${pathrows[@]}"; do
     scene_time=$(extract_landsat_hms.py "$landsat_ac")
     set_output_names "$scene_time"
   fi
+  # shellcheck disable=SC2219
   let INDEX=${INDEX}+1
   echo "Running L8inS2tile ${pathrow}"
   L8inS2tile  "$mgrs" \
