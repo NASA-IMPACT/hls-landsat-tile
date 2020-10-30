@@ -49,6 +49,7 @@ set_output_names () {
   nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
   griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
   output_metadata="${workingdir}/${outputname}.cmr.xml"
+  output_stac_metadata="${workingdir}/${outputname}_stac.json"
   output_thumbnail="${workingdir}/${outputname}.jpg"
   manifest_name="${outputname}.json"
   manifest="${workingdir}/${manifest_name}"
@@ -113,6 +114,10 @@ create_thumbnail -i "$output_hdf" -o "$output_thumbnail" -s L30
 echo "Creating metadata"
 create_metadata "$output_hdf" --save "$output_metadata"
 
+# Create STAC metadata
+echo "Creating STAC metadata"
+cmr_to_stac_item "$output_metadata" "$output_stac_metadata"
+
 # Generate manifest
 echo "Generating manifest"
 create_manifest "$workingdir" "$manifest" "$bucket_key" "HLSL30" \
@@ -130,7 +135,8 @@ echo "credential_source = Ec2InstanceMetadata" >> ~/.aws/credentials
 
 if [ -z "$debug_bucket" ]; then
   aws s3 cp "$workingdir" "$bucket_key" --exclude "*" --include "*.tif" \
-    --include "*.xml" --include "*.jpg" --profile gccprofile --recursive
+    --include "*.xml" --include "*.jpg" --include "*_stac.json" \
+    --profile gccprofile --recursive
 
   # Copy manifest to S3 to signal completion.
   aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
