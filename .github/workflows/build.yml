@@ -1,12 +1,15 @@
-name: build_push_to_prod_ecr
-
+name: build
 on:
-  release:
-    branches: [ master ]
-    types: [ published ]
+  push:
+    branches:
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!master'   # excludes master
+      - '!dev'   # excludes master
 
 jobs:
-  build_push_to_prod_ecr:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,13 +33,3 @@ jobs:
 
       - name: Build image
         run: docker build . --tag hls-landsat-tile
-
-      - name: Push to prod ECR
-        id: push-prod-ecr
-        uses: jwalton/gh-ecr-push@v1
-        with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-west-2
-          local-image: hls-landsat-tile
-          image: hls-landsat-tile:${GITHUB_REF##*/}
