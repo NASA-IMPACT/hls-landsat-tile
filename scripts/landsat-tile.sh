@@ -18,6 +18,7 @@ inputbucket="$INPUT_BUCKET"
 workingdir="/var/scratch/${jobid}"
 # shellcheck disable=SC2153
 debug_bucket="$DEBUG_BUCKET"
+gibs_bucket="$GIBS_OUTPUT_BUCKET"
 
 # Remove tmp files on exit
 # shellcheck disable=SC2064
@@ -53,6 +54,8 @@ set_output_names () {
   output_thumbnail="${workingdir}/${outputname}.jpg"
   manifest_name="${outputname}.json"
   manifest="${workingdir}/${manifest_name}"
+  gibs_dir="${workingdir}/gibs"
+  gibs_bucket_key="s3://${gibs_bucket}/L30/data/${year}${day_of_year}"
   bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${outputname}"
 }
 
@@ -145,3 +148,41 @@ else
   debug_bucket_key=s3://${debug_bucket}/${outputname}
   aws s3 cp "$workingdir" "$debug_bucket_key" --recursive
 fi
+
+# Generate GIBS browse subtiles
+echo "Generating GIBS browse subtiles"
+mkdir -p "$gibs_dir"
+granule_to_gibs "$workingdir" "$gibs_dir" "$outputname"
+for gibs_id_dir in "$gibs_dir"/* ; do
+    if [ -d "$gibs_id_dir" ]; then
+      gibsid=$(basename "$gibs_id_dir")
+      echo "Processing gibs id ${gibsid}"
+      # shellcheck disable=SC2206
+      xmlfiles=(${gibs_id_dir}/*.xml)
+      xml="${xmlfiles[0]}"
+      subtile_basename=$(basename "$xml" .xml)
+      subtile_manifest_name="${subtile_basename}.json"
+      subtile_manifest="${gibs_id_dir}/${subtile_manifest_name}"
+      gibs_id_bucket_key="$gibs_bucket_key/${gibsid}" 
+      echo "Gibs id bucket key is ${gibs_id_bucket_key}"
+
+      create_manifest "$gibs_id_dir" "$subtile_manifest" \
+        "$gibs_id_bucket_key" "HLSL30" "$subtile_basename" "$jobid" true
+
+      # Copy GIBS tile package to S3.
+      if [ -z "$debug_bucket" ]; then
+        aws s3 cp "$gibs_id_dir" "$gibs_id_bucket_key" --exclude "*"  \
+          --include "*.tif" --include "*.xml" --profile gccprofile --recursive
+
+        # Copy manifest to S3 to signal completion.
+        aws s3 cp "$subtile_manifest" \
+          "${gibs_id_bucket_key}/${subtile_manifest_name}" \
+          --profile gccprofile
+      else
+        # Copy all intermediate files to debug bucket.
+        debug_bucket_key=s3://${debug_bucket}/${outputname}
+        aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive
+      fi
+    fi
+done
+echo "All GIBS tiles created"
