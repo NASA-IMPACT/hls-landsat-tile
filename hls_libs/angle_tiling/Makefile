@@ -1,6 +1,8 @@
 TGT = angle_tile
 OBJ = 	angle_tile.o \
 	l8ang.o \
+	hls_hdfeos.o \
+	s2r.o \
 	util.o \
 	hls_projection.o \
 	hdfutility.o \
@@ -15,6 +17,12 @@ angle_tile.o: angle_tile.c
 
 l8ang.o: ${SRC_DIR}/l8ang.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/l8ang.c -I$(HDFINC) -I$(SRC_DIR)
+
+hls_hdfeos.o: ${SRC_DIR}/hls_hdfeos.c
+	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hls_hdfeos.c -I$(HDFINC) -I$(SRC_DIR)
+
+s2r.o: ${SRC_DIR}/s2r.c
+	$(CC) $(CFLAGS) -c  ${SRC_DIR}/s2r.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
 
 util.o: ${SRC_DIR}/util.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/util.c -I$(HDFINC) -I$(SRC_DIR)
