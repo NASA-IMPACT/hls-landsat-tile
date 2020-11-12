@@ -1,4 +1,4 @@
-/*  HDFEOS for S10, S30, and L30. */
+/*  HDFEOS for S10, S30, L30, and the solar-view angle. */
 
 #ifndef HLS_HDFEOS_H
 #define HLS_HDFEOS_H
@@ -9,6 +9,8 @@
 #include "s2r.h"
 #include "s2at30m.h"
 #include "lsat.h"
+#include "s2ang.h"
+#include "l8ang.h"
 
 /* Purely for the sake of HDFEOS; HLS processing does not rely on this. 
  * This information is copied from an opened HLS file.
@@ -69,17 +71,24 @@ bool AppendMeta(char *cbuf, int *ic, char *s);
 bool PutAttrDouble(int32 sds_id, Myhdf_attr_t *attr, double *val);
 bool PutAttrString(int32 sds_id, Myhdf_attr_t *attr, char *string);
 
-//int PutSDSDimInfo(int32 sds_id, char *dimname, int irank);
+int PutSpaceDefHDF(char *hdfname, char *struct_metadata, sds_info_t sds[], int nsds);
 
 /* S10 */
 int set_S10_sds_info(sds_info_t *s2_sds, int nsds, s2r_t *s2r);
-int S10_PutSpaceDefHDF(s2r_t *tile, sds_info_t sds[], int nsds);
+int S10_PutSpaceDefHDF(char *hdfname, sds_info_t sds[], int nsds);
 
 /* S30 */
 int set_S30_sds_info(sds_info_t *s2_sds, int nsds, s2at30m_t *s2r);
-int S30_PutSpaceDefHDF(s2at30m_t *tile, sds_info_t sds[], int nsds);
+int S30_PutSpaceDefHDF(char *hdfname, sds_info_t sds[], int nsds);
 
 /* L30 */
 int set_L30_sds_info(sds_info_t *all_sds,  int nsds,  lsat_t *lsat);
-int L30_PutSpaceDefHDF(lsat_t *tile, sds_info_t sds[], int nsds);
+int L30_PutSpaceDefHDF(char *hdfname, sds_info_t sds[], int nsds);
+
+/* solar-view angle. Works for both Sentinel and Landsat because they have the
+ * same SDS names */
+int set_S2ang_sds_info(sds_info_t *all_sds,  int nsds,  s2ang_t *s2ang);
+int set_L8ang_sds_info(sds_info_t *all_sds,  int nsds,  l8ang_t *l8ang);
+int angle_PutSpaceDefHDF(char *hdfname, sds_info_t sds[], int nsds);
+
 #endif
