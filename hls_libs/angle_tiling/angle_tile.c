@@ -157,14 +157,15 @@ int main(int argc, char *argv[])
 	close_l8ang(&angout);
 
 
-	/* Make angle HDF-EOS, if it is non-empty and hasn't been deleted */
-	if (file_exist(angout.fname)) {
+	/* Make angle HDF-EOS only if it is opened for the first time, and 
+	 * if it is non-empty and therefore hasn't been deleted */
+	if (update_outfile == 0 && file_exist(angout.fname)) {
 		int NSDS = 4;	 	/* Number of angle SDS */
 		sds_info_t all_sds[NSDS];
         	set_L8ang_sds_info(all_sds, NSDS, &angout);
         	ret = angle_PutSpaceDefHDF(angout.fname, all_sds, NSDS);
         	if (ret != 0) {
-                	Error("Error in HLS_PutSpaceDefHDF");
+                	Error("Error in angle_PutSpaceDefHDF");
                 	exit(1);
 		}
         }
