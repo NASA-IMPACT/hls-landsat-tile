@@ -47,6 +47,7 @@ set_output_names () {
   nbar_input="${workingdir}/${nbar_name}.hdf"
   output_hdf="${workingdir}/${outputname}.hdf"
   nbar_angle="${workingdir}/L8ANGLE.${nbarbasename}.hdf"
+  angleoutputfinal="${workingdir}/${outputbasename}.ANGLE.hdf"
   nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
   griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
   output_metadata="${workingdir}/${outputname}.cmr.xml"
@@ -105,10 +106,13 @@ echo "Rename NBAR"
 mv "$nbar_input" "$output_hdf"
 mv "${nbar_input}.hdr" "${output_hdf}.hdr"
 
+# Rename angle to correct output name
+mv "$nbar_angle" "$angleoutputfinal"
+
 # Convert to COGs
 echo "Converting to COGs"
 hdf_to_cog "$output_hdf" --output-dir "$workingdir" --product L30
-hdf_to_cog "$nbar_angle" --output-dir "$workingdir" --product L30_ANGLES
+hdf_to_cog "$angleoutputfinal" --output-dir "$workingdir" --product L30_ANGLES
 
 # Create thumbnail
 echo "Creating thumbnail"
@@ -164,7 +168,7 @@ for gibs_id_dir in "$gibs_dir"/* ; do
       subtile_basename=$(basename "$xml" .xml)
       subtile_manifest_name="${subtile_basename}.json"
       subtile_manifest="${gibs_id_dir}/${subtile_manifest_name}"
-      gibs_id_bucket_key="$gibs_bucket_key/${gibsid}" 
+      gibs_id_bucket_key="$gibs_bucket_key/${gibsid}"
       echo "Gibs id bucket key is ${gibs_id_bucket_key}"
 
       create_manifest "$gibs_id_dir" "$subtile_manifest" \
