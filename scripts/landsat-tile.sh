@@ -108,6 +108,7 @@ mv "${nbar_input}.hdr" "${output_hdf}.hdr"
 # Convert to COGs
 echo "Converting to COGs"
 hdf_to_cog "$output_hdf" --output-dir "$workingdir" --product L30
+hdf_to_cog "$nbar_angle" --output-dir "$workingdir" --product L30_ANGLES
 
 # Create thumbnail
 echo "Creating thumbnail"
