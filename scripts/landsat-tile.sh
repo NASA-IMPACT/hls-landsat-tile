@@ -47,7 +47,7 @@ set_output_names () {
   nbar_input="${workingdir}/${nbar_name}.hdf"
   output_hdf="${workingdir}/${outputname}.hdf"
   nbar_angle="${workingdir}/L8ANGLE.${nbarbasename}.hdf"
-  angleoutputfinal="${workingdir}/${outputbasename}.ANGLE.hdf"
+  angleoutputfinal="${workingdir}/${outputname}.ANGLE.hdf"
   nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
   griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
   output_metadata="${workingdir}/${outputname}.cmr.xml"
