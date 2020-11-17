@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
 		Error("Error in set_L30_sds_info");
 		exit(1);
 	}
-        ret = L30_PutSpaceDefHDF(&lsatin, all_sds, L8NRB+L8NTB+2);
+        ret = L30_PutSpaceDefHDF(lsatin.fname, all_sds, L8NRB+L8NTB+2);
         if (ret != 0) {
                 Error("Error in HLS_PutSpaceDefHDF");
                 exit(1);
