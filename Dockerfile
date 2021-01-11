@@ -1,4 +1,3 @@
-# FROM hls-base-c2
 FROM 018923174646.dkr.ecr.us-west-2.amazonaws.com/espa/external-c2
 ENV PREFIX=/usr/local \
     SRC_DIR=/usr/local/src \
@@ -12,7 +11,6 @@ ENV PREFIX=/usr/local \
     GCTPINC=/usr/local/include \
     GCTPLINK="-lGctp -lm" \
     HDFLINK=" -lmfhdf -ldf -lm" \
-		L8_AUX_DIR=/usr/local/src \
     ECS_ENABLE_TASK_IAM_ROLE=true \
     PYTHONPATH="${PYTHONPATH}:${PREFIX}/lib/python3.6/site-packages" \
     ACCODE=LaSRCL8V3.5.5 \
