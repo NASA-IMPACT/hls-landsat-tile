@@ -100,7 +100,7 @@ done
 
 ls "$workingdir"
 stat -c %s "$nbar_input"
-if [[ -f "$nbar_input" ]]; then
+if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
   echo "Running NBAR"
   cp "$nbar_input" "$griddedoutput"
   derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
