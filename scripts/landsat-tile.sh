@@ -98,12 +98,11 @@ for pathrow in "${pathrows[@]}"; do
               "$nbar_angle"
 done
 
-echo "Running NBAR"
-cp "$nbar_input" "$griddedoutput"
-derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
-
-
 if [[ -f "$nbar_input" ]]; then
+  echo "Running NBAR"
+  cp "$nbar_input" "$griddedoutput"
+  derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
+
   # Rename nbar to correct output name
   echo "Rename NBAR"
   mv "$nbar_input" "$output_hdf"
