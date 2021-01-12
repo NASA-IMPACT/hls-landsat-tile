@@ -565,8 +565,8 @@ int close_lsat(lsat_t *lsat)
 		if (! lsat->tile_has_data) {
 			SDend(lsat->sd_id);
 			lsat->sd_id = FAIL;
-			fprintf(stderr, "Delete empty tile: %s\n", lsat->fname);
-			remove(lsat->fname);
+			/* fprintf(stderr, "Delete empty tile: %s\n", lsat->fname); */
+			/* remove(lsat->fname); */
 		}
 		else {
 			int32 start[2], edge[2];
