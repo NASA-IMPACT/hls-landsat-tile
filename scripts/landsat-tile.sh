@@ -99,7 +99,6 @@ for pathrow in "${pathrows[@]}"; do
 done
 
 ls "$workingdir"
-stat -c %s "$nbar_input"
 if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
   echo "Running NBAR"
   cp "$nbar_input" "$griddedoutput"
