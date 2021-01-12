@@ -187,7 +187,7 @@ if [[ -f "$nbar_input" ]]; then
           # Copy manifest to S3 to signal completion.
           aws s3 cp "$subtile_manifest" \
             "${gibs_id_bucket_key}/${subtile_manifest_name}" \
-            --profile gccprofile 
+            --profile gccprofile
         else
           # Copy all intermediate files to debug bucket.
           debug_bucket_key=s3://${debug_bucket}/${outputname}
@@ -199,4 +199,4 @@ if [[ -f "$nbar_input" ]]; then
 else
   echo "No output tile produced"
   exit 5
-fi 
+fi
