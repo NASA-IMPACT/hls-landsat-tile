@@ -72,7 +72,7 @@ for pathrow in "${pathrows[@]}"; do
   landsat_ac="${basename}.hdf"
   landsat_sz_angle="${basename}_SZA.img"
   aws s3 cp "s3://${inputbucket}" "$workingdir" \
-    --exclude "*" --include "${basename}*" --recursive
+    --exclude "*" --include "${basename}*" --recursive --quiet
   # Use the scene_time of the first image for output naming
   if [ "$INDEX" = 0 ]; then
     scene_time=$(extract_landsat_hms.py "$landsat_ac")
@@ -144,14 +144,14 @@ echo "credential_source = Ec2InstanceMetadata" >> ~/.aws/credentials
 if [ -z "$debug_bucket" ]; then
   aws s3 cp "$workingdir" "$bucket_key" --exclude "*" --include "*.tif" \
     --include "*.xml" --include "*.jpg" --include "*_stac.json" \
-    --profile gccprofile --recursive
+    --profile gccprofile --recursive --quiet
 
   # Copy manifest to S3 to signal completion.
   aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
 else
   # Copy all intermediate files to debug bucket.
   debug_bucket_key=s3://${debug_bucket}/${outputname}
-  aws s3 cp "$workingdir" "$debug_bucket_key" --recursive
+  aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet
 fi
 
 # Generate GIBS browse subtiles
@@ -177,16 +177,17 @@ for gibs_id_dir in "$gibs_dir"/* ; do
       # Copy GIBS tile package to S3.
       if [ -z "$debug_bucket" ]; then
         aws s3 cp "$gibs_id_dir" "$gibs_id_bucket_key" --exclude "*"  \
-          --include "*.tif" --include "*.xml" --profile gccprofile --recursive
+          --include "*.tif" --include "*.xml" --profile gccprofile \
+          --recursive --quiet
 
         # Copy manifest to S3 to signal completion.
         aws s3 cp "$subtile_manifest" \
           "${gibs_id_bucket_key}/${subtile_manifest_name}" \
-          --profile gccprofile
+          --profile gccprofile 
       else
         # Copy all intermediate files to debug bucket.
         debug_bucket_key=s3://${debug_bucket}/${outputname}
-        aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive
+        aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
       fi
     fi
 done
