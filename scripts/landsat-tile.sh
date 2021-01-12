@@ -81,7 +81,6 @@ for pathrow in "${pathrows[@]}"; do
   # shellcheck disable=SC2219
   let INDEX=${INDEX}+1
   # Pre-create output file to avoid L8inS2tile failure when removing.
-  touch "$nbar_input"
   echo "Running L8inS2tile ${pathrow}"
   L8inS2tile  "$mgrs" \
               "$mgrs_ulx" \
