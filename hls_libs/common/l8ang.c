@@ -524,8 +524,8 @@ int close_l8ang(l8ang_t *l8ang)
 		if (! l8ang->tile_has_data) {
 			SDend(l8ang->sd_id);
 			l8ang->sd_id = FAIL;
-			/* fprintf(stderr, "Delete empty tile: %s\n", l8ang->fname); */
-			/* remove(l8ang->fname); */
+      fprintf(stderr, "Delete empty tile: %s\n", l8ang->fname);
+      remove(l8ang->fname);
 		}
 		else {
 			int32 start[2], edge[2];
