@@ -80,6 +80,8 @@ for pathrow in "${pathrows[@]}"; do
   fi
   # shellcheck disable=SC2219
   let INDEX=${INDEX}+1
+  # Pre-create output file to avoid L8inS2tile failure when removing.
+  touch "$nbar_input"
   echo "Running L8inS2tile ${pathrow}"
   L8inS2tile  "$mgrs" \
               "$mgrs_ulx" \
@@ -101,94 +103,100 @@ echo "Running NBAR"
 cp "$nbar_input" "$griddedoutput"
 derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
 
-# Rename nbar to correct output name
-echo "Rename NBAR"
-mv "$nbar_input" "$output_hdf"
-mv "${nbar_input}.hdr" "${output_hdf}.hdr"
 
-# Rename angle to correct output name
-mv "$nbar_angle" "$angleoutputfinal"
+if [[ -f "$nbar_input" ]]; then
+  # Rename nbar to correct output name
+  echo "Rename NBAR"
+  mv "$nbar_input" "$output_hdf"
+  mv "${nbar_input}.hdr" "${output_hdf}.hdr"
 
-# Convert to COGs
-echo "Converting to COGs"
-hdf_to_cog "$output_hdf" --output-dir "$workingdir" --product L30
-hdf_to_cog "$angleoutputfinal" --output-dir "$workingdir" --product L30_ANGLES
+  # Rename angle to correct output name
+  mv "$nbar_angle" "$angleoutputfinal"
 
-# Create thumbnail
-echo "Creating thumbnail"
-create_thumbnail -i "$output_hdf" -o "$output_thumbnail" -s L30
+  # Convert to COGs
+  echo "Converting to COGs"
+  hdf_to_cog "$output_hdf" --output-dir "$workingdir" --product L30
+  hdf_to_cog "$angleoutputfinal" --output-dir "$workingdir" --product L30_ANGLES
 
-# Create metadata
-echo "Creating metadata"
-create_metadata "$output_hdf" --save "$output_metadata"
+  # Create thumbnail
+  echo "Creating thumbnail"
+  create_thumbnail -i "$output_hdf" -o "$output_thumbnail" -s L30
 
-# Create STAC metadata
-echo "Creating STAC metadata"
-cmr_to_stac_item "$output_metadata" "$output_stac_metadata"
+  # Create metadata
+  echo "Creating metadata"
+  create_metadata "$output_hdf" --save "$output_metadata"
 
-# Generate manifest
-echo "Generating manifest"
-create_manifest "$workingdir" "$manifest" "$bucket_key" "HLSL30" \
-  "$outputname" "$jobid" false
+  # Create STAC metadata
+  echo "Creating STAC metadata"
+  cmr_to_stac_item "$output_metadata" "$output_stac_metadata"
 
-# Copy output to S3.
-mkdir -p ~/.aws
-echo "[profile gccprofile]" > ~/.aws/config
-echo "region=us-east-1" >> ~/.aws/config
-echo "output=text" >> ~/.aws/config
+  # Generate manifest
+  echo "Generating manifest"
+  create_manifest "$workingdir" "$manifest" "$bucket_key" "HLSL30" \
+    "$outputname" "$jobid" false
 
-echo "[gccprofile]" > ~/.aws/credentials
-echo "role_arn = ${GCC_ROLE_ARN}" >> ~/.aws/credentials
-echo "credential_source = Ec2InstanceMetadata" >> ~/.aws/credentials
+  # Copy output to S3.
+  mkdir -p ~/.aws
+  echo "[profile gccprofile]" > ~/.aws/config
+  echo "region=us-east-1" >> ~/.aws/config
+  echo "output=text" >> ~/.aws/config
 
-if [ -z "$debug_bucket" ]; then
-  aws s3 cp "$workingdir" "$bucket_key" --exclude "*" --include "*.tif" \
-    --include "*.xml" --include "*.jpg" --include "*_stac.json" \
-    --profile gccprofile --recursive --quiet
+  echo "[gccprofile]" > ~/.aws/credentials
+  echo "role_arn = ${GCC_ROLE_ARN}" >> ~/.aws/credentials
+  echo "credential_source = Ec2InstanceMetadata" >> ~/.aws/credentials
 
-  # Copy manifest to S3 to signal completion.
-  aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
-else
-  # Copy all intermediate files to debug bucket.
-  debug_bucket_key=s3://${debug_bucket}/${outputname}
-  aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet
-fi
+  if [ -z "$debug_bucket" ]; then
+    aws s3 cp "$workingdir" "$bucket_key" --exclude "*" --include "*.tif" \
+      --include "*.xml" --include "*.jpg" --include "*_stac.json" \
+      --profile gccprofile --recursive --quiet
 
-# Generate GIBS browse subtiles
-echo "Generating GIBS browse subtiles"
-mkdir -p "$gibs_dir"
-granule_to_gibs "$workingdir" "$gibs_dir" "$outputname"
-for gibs_id_dir in "$gibs_dir"/* ; do
-    if [ -d "$gibs_id_dir" ]; then
-      gibsid=$(basename "$gibs_id_dir")
-      echo "Processing gibs id ${gibsid}"
-      # shellcheck disable=SC2206
-      xmlfiles=(${gibs_id_dir}/*.xml)
-      xml="${xmlfiles[0]}"
-      subtile_basename=$(basename "$xml" .xml)
-      subtile_manifest_name="${subtile_basename}.json"
-      subtile_manifest="${gibs_id_dir}/${subtile_manifest_name}"
-      gibs_id_bucket_key="$gibs_bucket_key/${gibsid}"
-      echo "Gibs id bucket key is ${gibs_id_bucket_key}"
+    # Copy manifest to S3 to signal completion.
+    aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
+  else
+    # Copy all intermediate files to debug bucket.
+    debug_bucket_key=s3://${debug_bucket}/${outputname}
+    aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet
+  fi
 
-      create_manifest "$gibs_id_dir" "$subtile_manifest" \
-        "$gibs_id_bucket_key" "HLSL30" "$subtile_basename" "$jobid" true
+  # Generate GIBS browse subtiles
+  echo "Generating GIBS browse subtiles"
+  mkdir -p "$gibs_dir"
+  granule_to_gibs "$workingdir" "$gibs_dir" "$outputname"
+  for gibs_id_dir in "$gibs_dir"/* ; do
+      if [ -d "$gibs_id_dir" ]; then
+        gibsid=$(basename "$gibs_id_dir")
+        echo "Processing gibs id ${gibsid}"
+        # shellcheck disable=SC2206
+        xmlfiles=(${gibs_id_dir}/*.xml)
+        xml="${xmlfiles[0]}"
+        subtile_basename=$(basename "$xml" .xml)
+        subtile_manifest_name="${subtile_basename}.json"
+        subtile_manifest="${gibs_id_dir}/${subtile_manifest_name}"
+        gibs_id_bucket_key="$gibs_bucket_key/${gibsid}"
+        echo "Gibs id bucket key is ${gibs_id_bucket_key}"
 
-      # Copy GIBS tile package to S3.
-      if [ -z "$debug_bucket" ]; then
-        aws s3 cp "$gibs_id_dir" "$gibs_id_bucket_key" --exclude "*"  \
-          --include "*.tif" --include "*.xml" --profile gccprofile \
-          --recursive --quiet
+        create_manifest "$gibs_id_dir" "$subtile_manifest" \
+          "$gibs_id_bucket_key" "HLSL30" "$subtile_basename" "$jobid" true
 
-        # Copy manifest to S3 to signal completion.
-        aws s3 cp "$subtile_manifest" \
-          "${gibs_id_bucket_key}/${subtile_manifest_name}" \
-          --profile gccprofile 
-      else
-        # Copy all intermediate files to debug bucket.
-        debug_bucket_key=s3://${debug_bucket}/${outputname}
-        aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
+        # Copy GIBS tile package to S3.
+        if [ -z "$debug_bucket" ]; then
+          aws s3 cp "$gibs_id_dir" "$gibs_id_bucket_key" --exclude "*"  \
+            --include "*.tif" --include "*.xml" --profile gccprofile \
+            --recursive --quiet
+
+          # Copy manifest to S3 to signal completion.
+          aws s3 cp "$subtile_manifest" \
+            "${gibs_id_bucket_key}/${subtile_manifest_name}" \
+            --profile gccprofile 
+        else
+          # Copy all intermediate files to debug bucket.
+          debug_bucket_key=s3://${debug_bucket}/${outputname}
+          aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
+        fi
       fi
-    fi
-done
-echo "All GIBS tiles created"
+  done
+  echo "All GIBS tiles created"
+else
+  echo "No output tile produced"
+  exit 5
+fi 
