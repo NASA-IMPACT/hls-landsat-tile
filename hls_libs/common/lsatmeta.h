@@ -9,7 +9,7 @@
 #define L_SENSOR	  	"SENSOR"
 #define L_SCENEID		"LANDSAT_SCENE_ID"
 #define L_PRODUCTID		"LANDSAT_PRODUCT_ID"	 /* New in collection-based */
-#define L_DATA_TYPE  		"DATA_TYPE"		 /* Applied both pre-collection and collection */
+#define L_DATA_TYPE  		"PROCESSING_LEVEL"		 /* C2 */
 #define L_TILE_ID   		"TILE_ID"
 #define L_SENSING_TIME   	"SENSING_TIME"
 #define L_L1PROCTIME     	"L1_PROCESSING_TIME"	/* Use ARCHIVING_TIME for L1PROCTIME */

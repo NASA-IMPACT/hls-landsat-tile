@@ -1,8 +1,9 @@
-/* Grid the solar-view angle of a Landsat scene into an ovelapping 
+/* Grid the solar and view angle of a Landsat scene into an ovelapping 
  * Sentinel-2 tile. Both systems use UTM, but the zone numbers may be different. 
  * 
  * A nearest-neighbor resampling is sufficient. The sub-pixel geolocation error of 
- * L8 does not matter, i.e., no AROP needed. 
+ * L8 does not matter; even for reflectance, AROP is no longer needed on Collection-2 
+ * data.
  * 
  * Note that Landsat data Y coordinate does not use a false northing for 
  * the southern hemisphere as the S2 does.
@@ -13,6 +14,7 @@
 #include <string.h>
 
 #include "l8ang.h"
+#include "hls_hdfeos.h"
 #include "hls_commondef.h"
 #include "hls_projection.h"
 #include "error.h"
@@ -24,9 +26,9 @@ int main(int argc, char *argv[])
 	double s2ulx;			
 	double s2uly;	/* The uly of S2 observing the false northing standard for southern hemisphere */ 
 	char fname_sz[LINELEN];		/* solar zenith file in scene */
-	char fname_out[LINELEN];	/* angle in tile */
+	char fname_out[LINELEN];	/* four angle SDS in tile */
 
-	char s2numhem[10]; 	/* UTM zone number and the hemisphere spec. e.g. 13S,  13N*/
+	char s2zonehem[10]; 	/* UTM zone number and the hemisphere spec. e.g. 13S,  13N*/
 	int l8zone, s2zone;
 
 	l8ang_t angin; 	/* Angle in scene */ 
@@ -66,9 +68,9 @@ int main(int argc, char *argv[])
 
 	/* Create tile-based output */
 	s2zone = atoi(s2tileid);
-	sprintf(s2numhem, "%02d%s",  s2zone, s2tileid[2] >= 'N'?  "N" : "S"); 
+	sprintf(s2zonehem, "%02d%s",  s2zone, s2tileid[2] >= 'N'?  "N" : "S"); 
 	strcpy(angout.fname, fname_out);
-	strcpy(angout.numhem, s2numhem);
+	strcpy(angout.zonehem, s2zonehem);
 	angout.ulx = s2ulx;
 	angout.uly = s2uly;
 	angout.nrow = S2TILESZ/HLS_PIXSZ;	/* S2 tile of 30-m pixels */
@@ -90,12 +92,12 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	if (strstr(s2numhem, "S"))
-		s2ulyGCTP = s2uly - 10000000;	/* Just accommodate GCTP. The output header uses the standard */
+	if (strstr(s2zonehem, "S"))
+		s2ulyGCTP = s2uly - 1E7;	/* Just accommodate GCTP. The output header uses the standard */
 	else
 		s2ulyGCTP = s2uly;
 
-	l8zone = atoi(angin.numhem);
+	l8zone = atoi(angin.zonehem);
 
 	if (update_outfile) 
 		angout.tile_has_data = 1;
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
 			kin = lsatrow * angin.ncol + lsatcol;
 			kout = irow * angout.ncol + icol;
 			
-			if (angin.sz[kin] != LANDSAT_ANGFILL ) { 
+			if (angin.sz[kin] != ANGFILL ) { 
 				angout.sz[kout] = angin.sz[kin];
 				angout.sa[kout] = angin.sa[kin];
 
@@ -151,8 +153,22 @@ int main(int argc, char *argv[])
 	strcpy(l1tsceneid, pos);
 	l8ang_add_l1tsceneid(&angout, l1tsceneid);
 
-	/*****/
+	/* Close. If the output file is empty, it will be deleted during closing */
 	close_l8ang(&angout);
+
+
+	/* Make angle HDF-EOS only if it is opened for the first time, and 
+	 * if it is non-empty and therefore hasn't been deleted */
+	if (update_outfile == 0 && file_exist(angout.fname)) {
+		int NSDS = 4;	 	/* Number of angle SDS */
+		sds_info_t all_sds[NSDS];
+        	set_L8ang_sds_info(all_sds, NSDS, &angout);
+        	ret = angle_PutSpaceDefHDF(angout.fname, all_sds, NSDS);
+        	if (ret != 0) {
+                	Error("Error in angle_PutSpaceDefHDF");
+                	exit(1);
+		}
+        }
 
 	return 0;
 }

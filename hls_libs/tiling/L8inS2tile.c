@@ -11,13 +11,17 @@
  * the southern hemisphere as the S2 does, but the output does.
  *
  * Sep 8, 2017
+ * Aug 20, 2020
+ * Dec 3, 2020
  * Exit code:
- *  0: if a scene has been successful gridded into the tile; a new output file has
- *     been created or an existing output file has been added to. 
- *  1: if the data portion of the scene actually does not overlap with the tile; 
- *     it has no effect at all on the output (an output file is not created at all
- *     or is not added to).
- *  other:  errors. 
+ *  0: Always return 0 if there is no error. A Landsat scene is attempted  on a given
+ *     MGRS tile and empty file is created initially. If the gridding process finds
+ *     out that there is no overlap at all, the empty file will be deleted in the end,
+ *     and in this case the code still return 0.
+ *     Before 20 Aug 2020 the code returned 1 for the non-overlapping case and it caused 
+ *     some confusion for the IMPACT team; changed to 0 and they will look out for
+ *     the message of empty file deletion.
+ *  non-zero: other errors. 
  */
 
 #include <stdlib.h>
