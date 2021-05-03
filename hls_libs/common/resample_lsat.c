@@ -137,7 +137,7 @@ int resample_lsat(double utmx,
 	/* Bits 0-5 are individual bits */
 	for (bit = 0; bit <= 5; bit++) {
 		freq[1] = freq[0] = 0;
-		/* 2 x 2 neighbors in the 4x4 cubic convolution kernel*/
+		/* The innermost 2 x 2 neighbors in the 4x4 cubic convolution kernel*/
 		for (irow = brow+1; irow <= erow-1; irow++) {
 			for (icol = bcol+1; icol <= ecol-1; icol++) {
 				k = irow*lsat->ncol+icol;
@@ -150,9 +150,9 @@ int resample_lsat(double utmx,
 			mask = (mask | (01 << bit));
 	} 
 
-	/* Bit 6-7 are a group on aerosol, 4 states*/
+	/* Bits 6-7 are a group on aerosol level, 4 states*/
 	freq[3] = freq[2] = freq[1] = freq[0] = 0;
-	/* 2 x 2 neighbors in the 4x4 cubic convolution kernel*/
+	/* Innermost 2 x 2 neighbors in the 4x4 cubic convolution kernel*/
 	for (irow = brow+1; irow <= erow-1; irow++) {
 		for (icol = bcol+1; icol <= ecol-1; icol++) {
 			k = irow*lsat->ncol+icol;
@@ -169,7 +169,7 @@ int resample_lsat(double utmx,
 	/* Finally, all bits have been considered */
 	lsatpix->acmask = mask;
 
-	/*** ACmask ***/
+	/*** Fmask ***/
 	mask = 0;
 	/* Bits 0-5 are individual bits */
 	for (bit = 0; bit <= 5; bit++) {
@@ -186,8 +186,26 @@ int resample_lsat(double utmx,
 			mask = (mask | (01 << bit));
 	} 
 
-	/* Bit 6-7 are unused for Fmask */
+	/* Apr 12, 2021. Fmask also has the 2 bits of aerosol level, borrowed from USGS aerosol QA */ 
+	/* Bit 6-7 are a group on aerosol, 4 states*/
+	freq[3] = freq[2] = freq[1] = freq[0] = 0;
+	/* The innermost 2 x 2 neighbors in the 4x4 cubic convolution kernel*/
+	for (irow = brow+1; irow <= erow-1; irow++) {
+		for (icol = bcol+1; icol <= ecol-1; icol++) {
+			k = irow*lsat->ncol+icol;
+			state = ((lsat->fmask[k] >> 6) & 03);
+			freq[state]++;
+		}
+	}
+	for (i = 0; i <= 3; i++) {
+		if (freq[i] > 0) 	/* The presence of higher values of aerosol level override lower ones */
+			state = i;
+	}
+	mask = (mask | (state << 6));
+
+	/* Finally, all bits have been considered */
 	lsatpix->fmask = mask;
+
 
 	return 0;
 }

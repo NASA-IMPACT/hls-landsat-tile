@@ -91,4 +91,8 @@ int set_S2ang_sds_info(sds_info_t *all_sds,  int nsds,  s2ang_t *s2ang);
 int set_L8ang_sds_info(sds_info_t *all_sds,  int nsds,  l8ang_t *l8ang);
 int angle_PutSpaceDefHDF(char *hdfname, sds_info_t sds[], int nsds);
 
+/* AOD, for both Landsat and Sentinel-2.  And will reuse angle_PutSpaceDefHDF() */
+// Apr 15, 2021: Abandon. Now we have the 2 bits of aerosol level.
+// int set_aod_sds_info(sds_info_t *all_sds,  int nsds, aod_t *aod);
+
 #endif
