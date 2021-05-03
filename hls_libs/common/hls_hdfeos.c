@@ -869,34 +869,6 @@ int set_L8ang_sds_info(sds_info_t *all_sds,  int nsds,  l8ang_t *l8ang)
 	return(0);
 }
 
-//int set_aod_sds_info(sds_info_t *all_sds,  int nsds, aod_t *aod)
-//{
-//	char message[MSGLEN];
-//	char *dimnames[2] =  {"YDim_Grid", "XDim_Grid"};
-//	int iband = 0; 	/* There is only one SDS */
-//
-//	if (nsds != 1) {
-//		fprintf(stderr, "Only 1 SDS allowed in set_aod_sds_info()\n");
-//		return(1);
-//	}	
-//	iband = 0;
-//
-//	strcpy(all_sds[iband].name,  LASRC_AOD);
-//	strcpy(all_sds[iband].data_type_name, "DFNT_UINT8");
-//	all_sds[iband].data_type = DFNT_UINT8;
-//	strcpy(all_sds[iband].dimname[0], dimnames[0]);
-//	strcpy(all_sds[iband].dimname[1], dimnames[1]);
-//
-//	all_sds[iband].ulx = aod->ulx;
-//	all_sds[iband].uly = aod->uly;
-//	all_sds[iband].nrow = aod->nrow;
-//	all_sds[iband].ncol = aod->ncol;
-//	all_sds[iband].pixsz = HLS_PIXSZ; 
-//	all_sds[iband].zonecode =  atoi(aod->zonehem);
-//
-//	return(0);
-//}
-
 int angle_PutSpaceDefHDF(char *hdfname, sds_info_t sds[], int nsds)
 {
 	int32 sd_id;
