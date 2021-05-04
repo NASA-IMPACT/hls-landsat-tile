@@ -153,7 +153,9 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
     aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
   else
     # Copy all intermediate files to debug bucket.
-    debug_bucket_key=s3://${debug_bucket}/${outputname}
+    echo "Copy files to debug bucket"
+    timestamp=$(date +'%Y_%m_%d_%H_%M')
+    debug_bucket_key=s3://${debug_bucket}/${outputname}_${timestamp}
     aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet
   fi
 
@@ -189,7 +191,8 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
             --profile gccprofile
         else
           # Copy all intermediate files to debug bucket.
-          debug_bucket_key=s3://${debug_bucket}/${outputname}
+          timestamp=$(date +'%Y_%m_%d_%H_%M')
+          debug_bucket_key=s3://${debug_bucket}/${outputname}_${timestamp}
           aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
         fi
       fi
