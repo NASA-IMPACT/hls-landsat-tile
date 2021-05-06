@@ -127,7 +127,8 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
 
   # Create STAC metadata
   echo "Creating STAC metadata"
-  cmr_to_stac_item "$output_metadata" "$output_stac_metadata"
+  cmr_to_stac_item "$output_metadata" "$output_stac_metadata" \
+    data.lpdaac.earthdatacloud.nasa.gov 020
 
   # Generate manifest
   echo "Generating manifest"
