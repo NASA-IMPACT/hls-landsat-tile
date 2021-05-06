@@ -36,7 +36,7 @@ day_of_year=$(get_doy "${year}" "${month}" "${day}")
 
 set_output_names () {
   hms="$1"
-  hlsversion="v1.5"
+  hlsversion="v2.0"
   outputbasename="T${mgrs}.${year}${day_of_year}T${hms}.${hlsversion}"
   nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
   outputname="HLS.L30.${outputbasename}"
