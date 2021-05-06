@@ -59,7 +59,7 @@ RUN cd ${SRC_DIR}/angle_tiling \
 
 RUN pip3 install rio-cogeo==1.1.10 --no-binary rasterio --user
 RUN pip3 install git+https://github.com/NASA-IMPACT/hls-thumbnails@v1.1
-RUN pip3 install git+https://github.com/NASA-IMPACT/hls-metadata@v1.8
+RUN pip3 install git+https://github.com/NASA-IMPACT/hls-metadata@v1.9
 RUN pip3 install wheel
 RUN pip3 install git+https://github.com/NASA-IMPACT/hls-browse_imagery@v1.5
 RUN pip3 install libxml2-python3
