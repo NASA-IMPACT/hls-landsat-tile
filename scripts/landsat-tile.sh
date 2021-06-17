@@ -36,7 +36,7 @@ day_of_year=$(get_doy "${year}" "${month}" "${day}")
 
 set_output_names () {
   hms="$1"
-  hlsversion="v1.5"
+  hlsversion="v2.0"
   outputbasename="T${mgrs}.${year}${day_of_year}T${hms}.${hlsversion}"
   nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
   outputname="HLS.L30.${outputbasename}"
@@ -127,7 +127,8 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
 
   # Create STAC metadata
   echo "Creating STAC metadata"
-  cmr_to_stac_item "$output_metadata" "$output_stac_metadata"
+  cmr_to_stac_item "$output_metadata" "$output_stac_metadata" \
+    data.lpdaac.earthdatacloud.nasa.gov 020
 
   # Generate manifest
   echo "Generating manifest"
@@ -153,7 +154,9 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
     aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
   else
     # Copy all intermediate files to debug bucket.
-    debug_bucket_key=s3://${debug_bucket}/${outputname}
+    echo "Copy files to debug bucket"
+    timestamp=$(date +'%Y_%m_%d_%H_%M')
+    debug_bucket_key=s3://${debug_bucket}/${outputname}_${timestamp}
     aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet
   fi
 
@@ -189,7 +192,8 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
             --profile gccprofile
         else
           # Copy all intermediate files to debug bucket.
-          debug_bucket_key=s3://${debug_bucket}/${outputname}
+          timestamp=$(date +'%Y_%m_%d_%H_%M')
+          debug_bucket_key=s3://${debug_bucket}/${outputname}_${timestamp}
           aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
         fi
       fi
