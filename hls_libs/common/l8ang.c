@@ -418,7 +418,10 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sz, comp_type, &c_info);	
-		SDsetattr(l8ang->sds_id_sz, "_FillValue", DFNT_UINT16, 1, (VOIDP)&angfill);
+		//SDsetattr(l8ang->sds_id_sz, "_FillValue", DFNT_UINT16, 1, (VOIDP)&angfill);
+		SDsetattr(l8ang->sds_id_sz,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_sz,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_sz,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		if ((l8ang->sz = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
@@ -436,7 +439,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sa, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sa, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sa, comp_type, &c_info);	
-		SDsetattr(l8ang->sds_id_sa, "_FillValue", DFNT_UINT16, 1, (VOIDP)&angfill);
+		SDsetattr(l8ang->sds_id_sa,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_sa,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_sa,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		if ((l8ang->sa = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
@@ -454,7 +459,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_vz, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_vz, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_vz, comp_type, &c_info);	
-		SDsetattr(l8ang->sds_id_vz, "_FillValue", DFNT_UINT16, 1, (VOIDP)&angfill);
+		SDsetattr(l8ang->sds_id_vz,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_vz,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_vz,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		/* SDS attribute not complete. OK */
 
 		/* memory */
@@ -475,7 +482,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_va, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_va, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_va, comp_type, &c_info);	
-		SDsetattr(l8ang->sds_id_va, "_FillValue", DFNT_UINT16, 1, (VOIDP)&angfill);
+		SDsetattr(l8ang->sds_id_va,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_va,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_va,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		/* SDS attribute not complete. OK */
 
 		/* memory */
@@ -524,8 +533,8 @@ int close_l8ang(l8ang_t *l8ang)
 		if (! l8ang->tile_has_data) {
 			SDend(l8ang->sd_id);
 			l8ang->sd_id = FAIL;
-      fprintf(stderr, "Delete empty tile: %s\n", l8ang->fname);
-      remove(l8ang->fname);
+			fprintf(stderr, "Delete empty tile: %s\n", l8ang->fname);
+			remove(l8ang->fname);
 		}
 		else {
 			int32 start[2], edge[2];
