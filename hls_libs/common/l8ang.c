@@ -418,7 +418,6 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sz, comp_type, &c_info);	
-		//SDsetattr(l8ang->sds_id_sz, "_FillValue", DFNT_UINT16, 1, (VOIDP)&angfill);
 		SDsetattr(l8ang->sds_id_sz,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
 		SDsetattr(l8ang->sds_id_sz,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
 		SDsetattr(l8ang->sds_id_sz,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
