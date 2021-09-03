@@ -70,8 +70,9 @@ INDEX=0
 for pathrow in "${pathrows[@]}"; do
   basename="${date}_${pathrow}"
   landsat_ac="${basename}.hdf"
+  input_bucket_key="${inputbucket}/${year}-${month}-${day}/${pathrow}/"
   landsat_sz_angle="${basename}_SZA.img"
-  aws s3 cp "s3://${inputbucket}" "$workingdir" \
+  aws s3 cp "s3://${input_bucket_key}" "$workingdir" \
     --exclude "*" --include "${basename}*" --recursive --quiet
   # Use the scene_time of the first image for output naming
   if [ "$INDEX" = 0 ]; then
