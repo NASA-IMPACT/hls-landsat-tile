@@ -49,7 +49,7 @@ set_output_names () {
   nbar_angle="${workingdir}/L8ANGLE.${nbarbasename}.hdf"
   angleoutputfinal="${workingdir}/${outputname}.ANGLE.hdf"
   nbar_cfactor="${workingdir}/CFACTOR.${nbarbasename}.hdf"
-  griddedoutput="${workingdir}/GRIDDED.${outputbasename}.hdf"
+  griddedoutput="${workingdir}/gridded.hdf"
   output_metadata="${workingdir}/${outputname}.cmr.xml"
   output_stac_metadata="${workingdir}/${outputname}_stac.json"
   output_thumbnail="${workingdir}/${outputname}.jpg"
@@ -101,6 +101,7 @@ done
 ls "$workingdir"
 if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
   echo "Running NBAR"
+  # Copy intermediate gridded output for debugging analysis.
   cp "$nbar_input" "$griddedoutput"
   derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
 
@@ -192,8 +193,8 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
             --profile gccprofile
         else
           # Copy all intermediate files to debug bucket.
-          timestamp=$(date +'%Y_%m_%d_%H_%M')
-          debug_bucket_key=s3://${debug_bucket}/${outputname}_${timestamp}
+          hdf_to_cog "$griddedoutput" --output-dir "$workingdir" --product L30 --debug-mode
+          debug_bucket_key=s3://${debug_bucket}/${outputname}
           aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
         fi
       fi
