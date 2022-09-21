@@ -154,11 +154,12 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
     # Copy manifest to S3 to signal completion.
     aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
   else
+    echo "Create gridded debug COG"
+    hdf_to_cog "$griddedoutput" --output-dir "$workingdir" --product L30 --debug-mode
     # Copy all intermediate files to debug bucket.
     echo "Copy files to debug bucket"
-    timestamp=$(date +'%Y_%m_%d_%H_%M')
-    debug_bucket_key=s3://${debug_bucket}/${outputname}_${timestamp}
-    aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet
+    debug_bucket_key=s3://${debug_bucket}/${outputname}
+    aws s3 cp "$workingdir" "$debug_bucket_key" --recursive --quiet --acl public-read
   fi
 
   # Generate GIBS browse subtiles
@@ -193,9 +194,8 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
             --profile gccprofile
         else
           # Copy all intermediate files to debug bucket.
-          hdf_to_cog "$griddedoutput" --output-dir "$workingdir" --product L30 --debug-mode
           debug_bucket_key=s3://${debug_bucket}/${outputname}
-          aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet
+          aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet --acl public-read
         fi
       fi
   done
