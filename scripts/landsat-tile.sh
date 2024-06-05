@@ -120,7 +120,7 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
 
   # Create thumbnail
   echo "Creating thumbnail"
-  create_thumbnail -i "$output_hdf" -o "$output_thumbnail" -s L30
+  create_thumbnail -i "$workingdir" -o "$output_thumbnail" -s L30
 
   # Create metadata
   echo "Creating metadata"
