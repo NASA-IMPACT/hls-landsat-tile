@@ -16,6 +16,7 @@ mgrs_uly="$MGRS_ULY"
 bucket="$OUTPUT_BUCKET"
 inputbucket="$INPUT_BUCKET"
 workingdir="/var/scratch/${jobid}"
+vidir="${workingdir}/vi"
 # shellcheck disable=SC2153
 debug_bucket="$DEBUG_BUCKET"
 gibs_bucket="$GIBS_OUTPUT_BUCKET"
@@ -58,6 +59,7 @@ set_output_names () {
   gibs_dir="${workingdir}/gibs"
   gibs_bucket_key="s3://${gibs_bucket}/L30/data/${year}${day_of_year}"
   bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${outputname}"
+  vi_bucket_key="s3://${bucket}/L30_VI/data/${year}${day_of_year}/${outputname}"
 }
 
 # Create array from pathrowlist
@@ -203,4 +205,23 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
 else
   echo "No output tile produced"
   exit 5
+fi
+
+# Generate VI files
+echo "Generating VI files"
+vi_generate_indices -i "$workingdir" -o "$vidir" -s "$outputname"
+vi_generate_metadata -i "$workingdir" -o "$vidir"
+
+if [ -z "$debug_bucket" ]; then
+  aws s3 cp "$vidir" "$vi_bucket_key" --exclude "*" --include "*.tif" \
+    --include "*.xml" --include "*.jpg" --include "*_stac.json" \
+    --profile gccprofile --recursive
+
+  # Copy manifest to S3 to signal completion.
+  # aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
+else
+  # Copy all vi files to debug bucket.
+  echo "Copy files to debug bucket"
+  debug_bucket_key=s3://${debug_bucket}/${outputname}
+  aws s3 cp "$vidir" "$debug_bucket_key" --recursive --acl public-read
 fi
