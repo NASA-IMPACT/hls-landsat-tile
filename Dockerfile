@@ -67,7 +67,7 @@ RUN pip3 install git+https://github.com/NASA-IMPACT/hls-hdf_to_cog@v2.1
 RUN pip3 install git+https://github.com/NASA-IMPACT/hls-manifest@v2.0
 RUN pip3 install git+https://github.com/NASA-IMPACT/hls-cmr_stac@v1.7
 RUN pip3 install git+https://github.com/NASA-IMPACT/hls-utilities@v1.6
-RUN pip3 install git+https://github.com/NASA-IMPACT/hls-vi@v1.1
+RUN pip3 install git+https://github.com/NASA-IMPACT/hls-vi@v1.5
 
 COPY ./python_scripts/* ${PREFIX}/bin/
 COPY ./scripts/* ${PREFIX}/bin/

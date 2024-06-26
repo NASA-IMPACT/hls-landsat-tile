@@ -209,7 +209,7 @@ fi
 
 # Generate VI files
 echo "Generating VI files"
-vi_generate_indices -i "$workingdir" -o "$vidir" -id "$outputname"
+vi_generate_indices -i "$workingdir" -o "$vidir" -s "$outputname"
 vi_generate_metadata -i "$workingdir" -o "$vidir"
 
 if [ -z "$debug_bucket" ]; then
