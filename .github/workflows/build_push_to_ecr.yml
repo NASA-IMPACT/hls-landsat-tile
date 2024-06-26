@@ -1,7 +1,8 @@
-name: build_push_to_ecr
+name: build_push_pr_ecr
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
     branches: [ dev ]
 
 jobs:
@@ -39,4 +40,4 @@ jobs:
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: us-west-2
           local-image: hls-landsat-tile
-          image: hls-landsat-tile
+          image: hls-landsat-tile:${{ github.event.pull_request.number }}
