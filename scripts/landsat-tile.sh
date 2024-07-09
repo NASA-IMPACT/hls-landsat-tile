@@ -41,6 +41,7 @@ set_output_names () {
   outputbasename="T${mgrs}.${year}${day_of_year}T${hms}.${hlsversion}"
   nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
   outputname="HLS.L30.${outputbasename}"
+  vi_outputname="HLS-VI.L30.${outputbasename}"
   # The derive_l8nbar C code infers values from the input file name so this
   # formatting is necessary.  This implicit name requirement is not documented
   # anywhere!
@@ -212,13 +213,19 @@ echo "Generating VI files"
 vi_generate_indices -i "$workingdir" -o "$vidir" -s "$outputname"
 vi_generate_metadata -i "$workingdir" -o "$vidir"
 
+echo "Generating VI manifest"
+vi_manifest_name="${vi_outputname}.json"
+vi_manifest="${vidir}/${vi_manifest_name}"
+create_manifest "$vidir" "$vi_manifest" "$vi_bucket_key" "HLSL30_VI" \
+  "$vi_outputname" "$jobid" false
+
 if [ -z "$debug_bucket" ]; then
   aws s3 cp "$vidir" "$vi_bucket_key" --exclude "*" --include "*.tif" \
     --include "*.xml" --include "*.jpg" --include "*_stac.json" \
     --profile gccprofile --recursive
 
   # Copy manifest to S3 to signal completion.
-  # aws s3 cp "$manifest" "${bucket_key}/${manifest_name}" --profile gccprofile
+  aws s3 cp "$vi_manifest" "${vi_bucket_key}/${vi_manifest_name}" --profile gccprofile
 else
   # Copy all vi files to debug bucket.
   echo "Copy files to debug bucket"
