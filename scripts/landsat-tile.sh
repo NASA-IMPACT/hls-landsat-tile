@@ -16,6 +16,7 @@ mgrs_uly="$MGRS_ULY"
 bucket="$OUTPUT_BUCKET"
 inputbucket="$INPUT_BUCKET"
 workingdir="/var/scratch/${jobid}"
+vidir="${workingdir}/vi"
 # shellcheck disable=SC2153
 debug_bucket="$DEBUG_BUCKET"
 gibs_bucket="$GIBS_OUTPUT_BUCKET"
@@ -40,6 +41,7 @@ set_output_names () {
   outputbasename="T${mgrs}.${year}${day_of_year}T${hms}.${hlsversion}"
   nbarbasename="${mgrs}.${year}${day_of_year}.${hms}.${hlsversion}"
   outputname="HLS.L30.${outputbasename}"
+  vi_outputname="HLS-VI.L30.${outputbasename}"
   # The derive_l8nbar C code infers values from the input file name so this
   # formatting is necessary.  This implicit name requirement is not documented
   # anywhere!
@@ -58,6 +60,7 @@ set_output_names () {
   gibs_dir="${workingdir}/gibs"
   gibs_bucket_key="s3://${gibs_bucket}/L30/data/${year}${day_of_year}"
   bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${outputname}"
+  vi_bucket_key="s3://${bucket}/L30_VI/data/${year}${day_of_year}/${outputname}"
 }
 
 # Create array from pathrowlist
@@ -203,4 +206,30 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
 else
   echo "No output tile produced"
   exit 5
+fi
+
+# Generate VI files
+echo "Generating VI files"
+vi_generate_indices -i "$workingdir" -o "$vidir" -s "$outputname"
+vi_generate_metadata -i "$workingdir" -o "$vidir"
+vi_generate_stac_items --cmr_xml "$vidir/${vi_outputname}.cmr.xml" --endpoint data.lpdaac.earthdatacloud.nasa.gov --version 020 --out_json "$vidir/${vi_outputname}_stac.json"
+
+echo "Generating VI manifest"
+vi_manifest_name="${vi_outputname}.json"
+vi_manifest="${vidir}/${vi_manifest_name}"
+create_manifest "$vidir" "$vi_manifest" "$vi_bucket_key" "HLSL30_VI" \
+  "$vi_outputname" "$jobid" false
+
+if [ -z "$debug_bucket" ]; then
+  aws s3 cp "$vidir" "$vi_bucket_key" --exclude "*" --include "*.tif" \
+    --include "*.xml" --include "*.jpg" --include "*_stac.json" \
+    --profile gccprofile --recursive
+
+  # Copy manifest to S3 to signal completion.
+  aws s3 cp "$vi_manifest" "${vi_bucket_key}/${vi_manifest_name}" --profile gccprofile
+else
+  # Copy all vi files to debug bucket.
+  echo "Copy files to debug bucket"
+  debug_bucket_key=s3://${debug_bucket}/${outputname}
+  aws s3 cp "$vidir" "$debug_bucket_key" --recursive --acl public-read
 fi

@@ -11,6 +11,6 @@ $ docker build --no-cache -t hls-landsat-tile .
 ```
 
 ## CI
-The repository contains two CI workflows.  When commits are pushed to the `dev` branch a new image is built and pushed to ECR with no tag.
+The repository contains two CI workflows.  When PRs are created against the `dev` branch a new image is built and pushed with a tag corresponding to the PR number.
 
 When a new `release` is created from `master` a new image is built and pushed to ECR with the release version as a tag.
