@@ -60,7 +60,7 @@ set_output_names () {
   gibs_dir="${workingdir}/gibs"
   gibs_bucket_key="s3://${gibs_bucket}/L30/data/${year}${day_of_year}"
   bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${outputname}"
-  vi_bucket_key="s3://${bucket}/L30_VI/data/${year}${day_of_year}/${outputname}"
+  vi_bucket_key="s3://${bucket}/L30_VI/data/${year}${day_of_year}/${vi_outputname}"
 }
 
 # Create array from pathrowlist
